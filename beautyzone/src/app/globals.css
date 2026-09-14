@@ -1,0 +1,83 @@
+/* 1. IMPORTACIÓN OBLIGATORIA DE TAILWIND v4 */
+@import "tailwindcss";
+
+/* 2. VARIABLES CSS (TUS COLORES + TUS FUENTES) */
+:root {
+  /* Fuentes */
+  --font-cormorant: "Cormorant Garamond", serif;
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+
+  /* Primarios */
+  --sys-color-primary-base: #572219;
+  --sys-color-primary-accent: #9d4b4c;
+
+  /* Secundarios & Fondos */
+  --sys-color-bg-base: #eadbcf;
+  --sys-color-bg-highlight: #f5ebe1;
+
+  /* Neutros */
+  --sys-color-surface: #ffffff;
+  --sys-color-border: #d8c3b3;
+  --sys-color-text-muted: #7a5c55;
+  --sys-color-text-primary: #32130e;
+
+  /* Semánticos */
+  --sys-color-success: #2e6f40;
+  --sys-color-warning: #c07d2b;
+  --sys-color-error: #b83a3a;
+  --sys-color-info: #4a6d8c;
+}
+
+/* 3. TIPOGRAFÍA GLOBAL */
+body {
+  font-family: var(--font-jakarta);
+}
+
+h1,
+h2,
+h3,
+.font-serif {
+  font-family: var(--font-cormorant);
+}
+
+/* 4. ANIMACIONES PERSONALIZADAS */
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(15px) rotate(-5deg);
+  }
+}
+
+@keyframes spin-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 7s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}

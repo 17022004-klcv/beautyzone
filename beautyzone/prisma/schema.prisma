@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  estado    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  usuarios Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  idrol     Int
+  nombre    String
+  apellido  String
+  correo    String   @unique
+  password  String
+  telefono  String?
+  estado    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rol                    Role           @relation(fields: [idrol], references: [id])
+  citasCliente           Cita[]         @relation("CitaCliente")
+  detallesCitaEstilista  DetalleCita[]  @relation("EstilistaServicio")
+  ventasCliente          Venta[]        @relation("VentaCliente")
+  ventasCajero           Venta[]        @relation("VentaCajero")
+  detallesVentaEstilista DetalleVenta[] @relation("EstilistaDetalleVenta")
+  comisiones             Comision[]
+  asistencias            Asistencia[]
+  cajasAperturadas       CajaTurno[]    @relation("CajeroTurno")
+
+  @@map("usuarios")
+}
+
+model Categoria {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  tipo      String   // 'SERVICIO' o 'PRODUCTO'
+  estado    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  servicios Servicio[]
+  productos Producto[]
+
+  @@map("categorias")
+}
+
+model Servicio {
+  id                 Int            @id @default(autoincrement())
+  idcategoria        Int
+  nombre             String
+  descripcion        String?
+  precio             Decimal        @db.Decimal(10, 2)
+  porcentajeComision Decimal        @default(0.00) @map("porcentaje_comision") @db.Decimal(5, 2)
+  imagen             String?
+  estado             Boolean        @default(true)
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+
+  categoria     Categoria      @relation(fields: [idcategoria], references: [id])
+  detallesCita  DetalleCita[]
+  detallesVenta DetalleVenta[]
+
+  @@map("servicios")
+}
+
+model Producto {
+  id          Int            @id @default(autoincrement())
+  idcategoria Int
+  nombre      String
+  descripcion String?
+  precio      Decimal        @db.Decimal(10, 2)
+  stock       Int            @default(0)
+  stockMinimo Int?           @default(5) @map("stock_minimo")
+  estado      Boolean        @default(true)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  categoria     Categoria      @relation(fields: [idcategoria], references: [id])
+  detallesVenta DetalleVenta[]
+
+  @@map("productos")
+}
+
+model Cita {
+  id         Int      @id @default(autoincrement())
+  idcliente  Int
+  fecha      DateTime @db.Date
+  horaInicio String   @map("hora_inicio") // Formato "HH:mm"
+  estado     String   @default("PENDIENTE") // PENDIENTE, CONFIRMADA, EN_PROCESO, FINALIZADA, CANCELADA
+  notas      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  cliente      Usuario       @relation("CitaCliente", fields: [idcliente], references: [id])
+  detallesCita DetalleCita[]
+  ventas       Venta[]
+
+  @@map("citas")
+}
+
+model DetalleCita {
+  id              Int      @id @default(autoincrement())
+  idcita          Int
+  idservicio      Int
+  idestilista     Int
+  precioHistorico Decimal  @map("precio_historico") @db.Decimal(10, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  cita      Cita     @relation(fields: [idcita], references: [id])
+  servicio  Servicio @relation(fields: [idservicio], references: [id])
+  estilista Usuario  @relation("EstilistaServicio", fields: [idestilista], references: [id])
+
+  @@map("detalle_citas")
+}
+
+// NUEVO: Control del Turno / Apertura y Cierre de Caja
+model CajaTurno {
+  id                  Int       @id @default(autoincrement())
+  idcajero            Int       @map("idcajero")
+  nombreCaja          String    @default("Caja Principal") @map("nombre_caja")
+  passwordPin         String    @map("password_pin")
+  montoApertura       Decimal   @map("monto_apertura") @db.Decimal(10, 2)
+  montoCierreEsperado Decimal?  @map("monto_cierre_esperado") @db.Decimal(10, 2)
+  montoCierreReal     Decimal?  @map("monto_cierre_real") @db.Decimal(10, 2)
+  diferencia          Decimal?  @db.Decimal(10, 2) // Sobrante (+) o Faltante (-)
+  estado              String    @default("ABIERTA") // ABIERTA, CERRADA
+  fechaApertura       DateTime  @default(now()) @map("fecha_apertura")
+  fechaCierre         DateTime? @map("fecha_cierre")
+
+  cajero              Usuario             @relation("CajeroTurno", fields: [idcajero], references: [id])
+  ventas              Venta[]
+  arqueoDenominacion  ArqueoDenominacion?
+
+  @@map("caja_turnos")
+}
+
+model Venta {
+  id             Int      @id @default(autoincrement())
+  idcliente      Int?
+  idempleadoCaja Int      @map("idempleado_caja")
+  idcajaTurno    Int?     @map("idcaja_turno") // NUEVO: Vinculación con el turno activo
+  idcita         Int?
+  total          Decimal  @db.Decimal(10, 2)
+  metodoPago     String   @map("metodo_pago") // EFECTIVO, TARJETA, TRANSFERENCIA
+  estado         String   @default("PAGADO") // PAGADO, ANULADO
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  cliente      Usuario?      @relation("VentaCliente", fields: [idcliente], references: [id])
+  empleadoCaja Usuario       @relation("VentaCajero", fields: [idempleadoCaja], references: [id])
+  cajaTurno    CajaTurno?    @relation(fields: [idcajaTurno], references: [id])
+  cita         Cita?         @relation(fields: [idcita], references: [id])
+  detallesVenta DetalleVenta[]
+
+  @@map("ventas")
+}
+
+// NUEVO: Conteo detallado de Monedas, Billetes y Otros pagos para el Cierre
+model ArqueoDenominacion {
+  id                 Int       @id @default(autoincrement())
+  idcajaTurno        Int       @unique @map("idcaja_turno")
+  // Billetes
+  b100               Int       @default(0)
+  b50                Int       @default(0)
+  b20                Int       @default(0)
+  b10                Int       @default(0)
+  b5                 Int       @default(0)
+  b1                 Int       @default(0)
+  // Monedas
+  m100               Int       @default(0) // Moneda de $1.00
+  m025               Int       @default(0) // $0.25
+  m010               Int       @default(0) // $0.10
+  m005               Int       @default(0) // $0.05
+  m001               Int       @default(0) // $0.01
+  // Otros Métodos
+  totalTarjeta       Decimal   @default(0.00) @map("total_tarjeta") @db.Decimal(10, 2)
+  totalTransferencia Decimal   @default(0.00) @map("total_transferencia") @db.Decimal(10, 2)
+  totalEfectivoContado Decimal @default(0.00) @map("total_efectivo_contado") @db.Decimal(10, 2)
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  cajaTurno          CajaTurno @relation(fields: [idcajaTurno], references: [id])
+
+  @@map("arqueo_denominaciones")
+}
+
+model DetalleVenta {
+  id             Int      @id @default(autoincrement())
+  idventa        Int
+  idproducto     Int?
+  idservicio     Int?
+  idestilista    Int?
+  cantidad       Int      @default(1)
+  precioUnitario Decimal  @map("precio_unitario") @db.Decimal(10, 2)
+  subtotal       Decimal  @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  venta      Venta     @relation(fields: [idventa], references: [id])
+  producto   Producto? @relation(fields: [idproducto], references: [id])
+  servicio   Servicio? @relation(fields: [idservicio], references: [id])
+  estilista  Usuario?  @relation("EstilistaDetalleVenta", fields: [idestilista], references: [id])
+  comisiones Comision[]
+
+  @@map("detalle_ventas")
+}
+
+model Comision {
+  id             Int      @id @default(autoincrement())
+  idestilista    Int
+  iddetalleVenta Int      @map("iddetalle_venta")
+  montoComision  Decimal  @map("monto_comision") @db.Decimal(10, 2)
+  estado         String   @default("PENDIENTE") // PENDIENTE, PAGADO
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  estilista    Usuario      @relation(fields: [idestilista], references: [id])
+  detalleVenta DetalleVenta @relation(fields: [iddetalleVenta], references: [id])
+
+  @@map("comisiones")
+}
+
+model Asistencia {
+  id           Int      @id @default(autoincrement())
+  idempleado   Int
+  fecha        DateTime @db.Date
+  hora         String   // Formato "14:30"
+  tipoRegistro String   @map("tipo_registro")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  empleado Usuario @relation(fields: [idempleado], references: [id])
+
+  @@map("asistencias")
+}
