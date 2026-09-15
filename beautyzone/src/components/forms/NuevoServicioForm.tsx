@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Button from "@/src/components/ui/Button";
-import { CategoriaItem } from "@/src/app/types/producto";
+import { Categoria } from "@/src/app/types/producto";
 import { ServicioItem } from "@/src/app/types/servicio";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
@@ -18,7 +18,7 @@ export default function NuevoServicioForm({
   onSuccess,
   servicioAEditar,
 }: Props) {
-  const [categorias, setCategorias] = useState<CategoriaItem[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -38,7 +38,7 @@ export default function NuevoServicioForm({
   useEffect(() => {
     fetch("/api/categorias")
       .then((res) => res.json())
-      .then((data: CategoriaItem[]) => {
+      .then((data: Categoria[]) => {
         if (Array.isArray(data)) {
           const servCats = data.filter(
             (c) => c.tipo?.toUpperCase() === "SERVICIO",
