@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Button from "@/src/components/ui/Button";
-import { CategoriaItem } from "@/src/app/types/producto";
+import { Categoria } from "@/src/app/types/producto";
 
 interface Props {
   onClose: () => void;
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function NuevoProductoForm({ onClose, onSuccess }: Props) {
-  const [categorias, setCategorias] = useState<CategoriaItem[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: "",
