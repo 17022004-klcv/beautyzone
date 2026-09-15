@@ -1,4 +1,4 @@
-import { ProductoItem, CategoriaItem } from "@/src/app/types/producto";
+import { Producto, Categoria } from "@/src/app/types/producto";
 import { exportToExcel } from "@/src/lib/exportUtils";
 import { generatePDFWithTemplate } from "@/src/lib/pdfTemplate";
 import { UsuarioItem, RoleItem } from "@/src/app/types/usuario";
@@ -6,7 +6,7 @@ import { AsistenciaItem } from "@/src/app/types/asistencia";
 
 export class ExportService {
   // EXPORTAR PRODUCTOS
-  static exportProductos(productos: ProductoItem[], format: "excel" | "pdf") {
+  static exportProductos(productos: Producto[], format: "excel" | "pdf") {
     if (format === "excel") {
       const data = productos.map((p) => ({
         ID: p.id,
@@ -38,7 +38,7 @@ export class ExportService {
 
   // EXPORTAR CATEGORÍAS
   static exportCategorias(
-    categorias: CategoriaItem[],
+    categorias: Categoria[],
     format: "excel" | "pdf",
   ) {
     if (format === "excel") {
