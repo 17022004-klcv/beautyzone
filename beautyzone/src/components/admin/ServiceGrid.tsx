@@ -15,13 +15,13 @@ import Button from "@/src/components/ui/Button";
 import Modal from "@/src/components/ui/Modal";
 import NuevoServicioForm from "@/src/components/forms/NuevoServicioForm";
 import { ServicioItem } from "@/src/app/types/servicio";
-import { CategoriaItem } from "@/src/app/types/producto";
+import { Categoria } from "@/src/app/types/producto";
 import { exportToExcel } from "@/src/lib/exportUtils";
 import { generatePDFWithTemplate } from "@/src/lib/pdfTemplate";
 
 export default function ServiceGrid() {
   const [servicios, setServicios] = useState<ServicioItem[]>([]);
-  const [categorias, setCategorias] = useState<CategoriaItem[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [selectedCategoria, setSelectedCategoria] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,7 +34,7 @@ export default function ServiceGrid() {
   useEffect(() => {
     fetch("/api/categorias")
       .then((res) => res.json())
-      .then((data: CategoriaItem[]) => {
+      .then((data: Categoria[]) => {
         if (Array.isArray(data)) {
           const servCats = data.filter(
             (c) => c.tipo?.toUpperCase() === "SERVICIO",
