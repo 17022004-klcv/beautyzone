@@ -1,9 +1,5 @@
 "use client";
 
-import { useUsuariosPage } from "@/src/app/(admin)/users/useUsuarioPage";
-import { UsuarioModal } from "@/src/components/forms/UsuarioModal";
-import { RolModal } from "@/src/components/forms/RolModal";
-
 import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
@@ -48,7 +44,6 @@ export default function UsuariosView() {
   // Formulario Rol
   const [formRol, setFormRol] = useState({ nombre: "" });
 
-  // Cargar datos según el TAB
   // Cargar datos (Usuarios y Roles siempre en paralelo)
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -193,11 +188,16 @@ export default function UsuariosView() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* TÍTULO Y CONTROLES SUPERIORES */}
+      {/* TÍTULO SIN FONDO Y CONTROLES SUPERIORES */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-serif font-bold text-[#32130E]">
-          Gestión de {activeTab}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-serif font-bold text-[#32130E]">
+            Gestión de {activeTab}
+          </h1>
+          <p className="text-xs font-medium text-[#7A5C55] mt-1">
+            Administra los usuarios del sistema y sus niveles de acceso
+          </p>
+        </div>
 
         <div className="flex items-center gap-3">
           {/* MENÚ DESCARGAR */}
@@ -205,27 +205,27 @@ export default function UsuariosView() {
             <Button
               variant="outline"
               size="md"
-              className="gap-2 text-sm font-semibold"
+              className="gap-2 text-xs font-semibold border-white/90 bg-white/60 hover:bg-white text-[#32130E] shadow-2xs"
               onClick={() => setShowExportMenu(!showExportMenu)}
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 text-[#32130E]" />
               <span>Descargar</span>
             </Button>
 
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-[#D8C3B3] rounded-xl shadow-lg z-20 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-44 bg-white/90 backdrop-blur-2xl border border-white rounded-2xl shadow-[0_12px_30px_rgba(50,19,14,0.08)] z-30 overflow-hidden p-1 space-y-0.5">
                 <button
                   onClick={() => handleExport("excel")}
-                  className="w-full px-4 py-2 text-xs font-semibold text-[#572219] hover:bg-[#F5EBE1] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   Excel (.xlsx)
                 </button>
                 <button
                   onClick={() => handleExport("pdf")}
-                  className="w-full px-4 py-2 text-xs font-semibold text-[#572219] hover:bg-[#F5EBE1] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4 text-red-600" />
+                  <FileText className="w-4 h-4 text-rose-600" />
                   PDF (.pdf)
                 </button>
               </div>
@@ -235,10 +235,10 @@ export default function UsuariosView() {
           {/* BOTÓN DINÁMICO */}
           <Button
             size="md"
-            className="gap-2 px-4 py-2.5 text-sm font-semibold"
+            className="gap-2 px-4 py-2 text-xs font-semibold shadow-sm"
             onClick={() => handleOpenModal()}
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             <span>
               {activeTab === "Usuarios" ? "Agregar Usuario" : "Agregar Rol"}
             </span>
@@ -253,10 +253,10 @@ export default function UsuariosView() {
         onSelectCategory={setActiveTab}
       />
 
-      {/* CONTENEDOR DE TABLA */}
-      <div className="bg-[#FFFFFF] border border-[#D8C3B3] rounded-2xl p-6 shadow-sm min-h-[400px]">
+      {/* CONTENEDOR DE TABLA CON GLASSMORPHISM */}
+      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.04)] min-h-[400px]">
         {loading ? (
-          <div className="flex justify-center items-center py-20 text-[#7A5C55] text-sm">
+          <div className="flex justify-center items-center py-20 text-[#7A5C55] text-xs font-semibold">
             Cargando {activeTab.toLowerCase()}...
           </div>
         ) : activeTab === "Usuarios" ? (
@@ -264,7 +264,7 @@ export default function UsuariosView() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#D8C3B3] text-xs font-bold text-[#572219]">
+                <tr className="border-b border-[#32130E]/10 text-xs font-bold text-[#32130E]">
                   <th className="py-3 px-4">Nombre Completo</th>
                   <th className="py-3 px-4">Correo</th>
                   <th className="py-3 px-4">Teléfono</th>
@@ -273,50 +273,53 @@ export default function UsuariosView() {
                   <th className="py-3 px-4 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F5EBE1]">
+              <tbody className="divide-y divide-[#32130E]/5">
                 {usuarios.map((u) => (
-                  <tr key={u.id} className="hover:bg-[#F5EBE1]/40 text-sm">
-                    <td className="py-3 px-4 font-semibold text-[#32130E]">
+                  <tr
+                    key={u.id}
+                    className="hover:bg-white/60 transition-colors text-xs font-medium"
+                  >
+                    <td className="py-3.5 px-4 font-bold text-[#32130E]">
                       {u.nombre} {u.apellido}
                     </td>
-                    <td className="py-3 px-4 text-[#7A5C55]">{u.correo}</td>
-                    <td className="py-3 px-4 text-[#7A5C55]">
+                    <td className="py-3.5 px-4 text-[#7A5C55]">{u.correo}</td>
+                    <td className="py-3.5 px-4 text-[#7A5C55]">
                       {u.telefono || "-"}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="bg-[#F5EBE1] text-[#572219] px-2.5 py-1 rounded-md text-xs font-semibold border border-[#D8C3B3]">
+                    <td className="py-3.5 px-4">
+                      <span className="bg-white/80 text-[#32130E] px-2.5 py-1 rounded-full text-[10px] font-bold border border-white shadow-2xs">
                         {u.rol?.nombre || "Sin Rol"}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-md font-semibold ${
+                        className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
                           u.estado
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-[#2E6F40]/10 border-[#2E6F40]/20 text-[#2E6F40]"
+                            : "bg-[#B83A3A]/10 border-[#B83A3A]/20 text-[#B83A3A]"
                         }`}
                       >
                         {u.estado ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right space-x-2">
+                    <td className="py-3.5 px-4 text-right space-x-1">
                       <button
                         onClick={() => handleOpenModal(u)}
-                        className="p-1 text-[#572219] hover:bg-[#F5EBE1] rounded-md transition"
+                        className="p-1.5 text-[#32130E] hover:bg-white/80 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs"
                         title="Editar"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => toggleEstadoUsuario(u)}
-                        className={`p-1 rounded-md transition ${
+                        className={`p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs ${
                           u.estado
-                            ? "text-red-600 hover:bg-red-50"
-                            : "text-green-600 hover:bg-green-50"
+                            ? "text-[#B83A3A] hover:bg-[#B83A3A]/10"
+                            : "text-[#2E6F40] hover:bg-[#2E6F40]/10"
                         }`}
                         title={u.estado ? "Desactivar" : "Activar"}
                       >
-                        <Power className="w-4 h-4" />
+                        <Power className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -325,7 +328,7 @@ export default function UsuariosView() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="text-center py-8 text-xs text-[#7A5C55]"
+                      className="text-center py-12 text-xs text-[#7A5C55] font-semibold"
                     >
                       No hay usuarios registrados.
                     </td>
@@ -339,43 +342,52 @@ export default function UsuariosView() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#D8C3B3] text-xs font-bold text-[#572219]">
+                <tr className="border-b border-[#32130E]/10 text-xs font-bold text-[#32130E]">
                   <th className="py-3 px-4">ID</th>
                   <th className="py-3 px-4">Nombre del Rol</th>
                   <th className="py-3 px-4">Estado</th>
                   <th className="py-3 px-4 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F5EBE1]">
+              <tbody className="divide-y divide-[#32130E]/5">
                 {roles.map((r) => (
-                  <tr key={r.id} className="hover:bg-[#F5EBE1]/40 text-sm">
-                    <td className="py-3 px-4 text-[#7A5C55]">#{r.id}</td>
-                    <td className="py-3 px-4 font-semibold text-[#32130E]">
+                  <tr
+                    key={r.id}
+                    className="hover:bg-white/60 transition-colors text-xs font-medium"
+                  >
+                    <td className="py-3.5 px-4 text-[#7A5C55]">#{r.id}</td>
+                    <td className="py-3.5 px-4 font-bold text-[#32130E]">
                       {r.nombre}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="text-xs px-2 py-0.5 rounded-md bg-green-100 text-green-800 font-semibold">
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
+                          r.estado
+                            ? "bg-[#2E6F40]/10 border-[#2E6F40]/20 text-[#2E6F40]"
+                            : "bg-[#B83A3A]/10 border-[#B83A3A]/20 text-[#B83A3A]"
+                        }`}
+                      >
                         {r.estado ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right space-x-2">
+                    <td className="py-3.5 px-4 text-right space-x-1">
                       <button
                         onClick={() => handleOpenModal(r)}
-                        className="p-1 text-[#572219] hover:bg-[#F5EBE1] rounded-md transition"
+                        className="p-1.5 text-[#32130E] hover:bg-white/80 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs"
                         title="Editar"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => toggleEstadoRol(r)}
-                        className={`p-1 rounded-md transition ${
+                        className={`p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs ${
                           r.estado
-                            ? "text-red-600 hover:bg-red-50"
-                            : "text-green-600 hover:bg-green-50"
+                            ? "text-[#B83A3A] hover:bg-[#B83A3A]/10"
+                            : "text-[#2E6F40] hover:bg-[#2E6F40]/10"
                         }`}
                         title={r.estado ? "Desactivar" : "Activar"}
                       >
-                        <Power className="w-4 h-4" />
+                        <Power className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -384,7 +396,7 @@ export default function UsuariosView() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="text-center py-8 text-xs text-[#7A5C55]"
+                      className="text-center py-12 text-xs text-[#7A5C55] font-semibold"
                     >
                       No hay roles registrados.
                     </td>
@@ -396,7 +408,7 @@ export default function UsuariosView() {
         )}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL CON VIDRIO */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -419,13 +431,13 @@ export default function UsuariosView() {
           <form onSubmit={handleSubmitUsuario} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#572219] mb-1">
+                <label className="block text-xs font-semibold text-[#32130E] mb-1">
                   Nombre
                 </label>
                 <input
                   type="text"
                   required
-                  className="w-full px-3 py-2 border border-[#D8C3B3] rounded-lg text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#572219]"
+                  className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                   value={formUser.nombre}
                   onChange={(e) =>
                     setFormUser({ ...formUser, nombre: e.target.value })
@@ -433,13 +445,13 @@ export default function UsuariosView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#572219] mb-1">
+                <label className="block text-xs font-semibold text-[#32130E] mb-1">
                   Apellido
                 </label>
                 <input
                   type="text"
                   required
-                  className="w-full px-3 py-2 border border-[#D8C3B3] rounded-lg text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#572219]"
+                  className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                   value={formUser.apellido}
                   onChange={(e) =>
                     setFormUser({ ...formUser, apellido: e.target.value })
@@ -449,13 +461,13 @@ export default function UsuariosView() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-semibold text-[#32130E] mb-1">
                 Correo Electrónico
               </label>
               <input
                 type="email"
                 required
-                className="w-full px-3 py-2 border border-[#D8C3B3] rounded-lg text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#572219]"
+                className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formUser.correo}
                 onChange={(e) =>
                   setFormUser({ ...formUser, correo: e.target.value })
@@ -465,12 +477,12 @@ export default function UsuariosView() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#572219] mb-1">
+                <label className="block text-xs font-semibold text-[#32130E] mb-1">
                   Teléfono
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-[#D8C3B3] rounded-lg text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#572219]"
+                  className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                   value={formUser.telefono}
                   onChange={(e) =>
                     setFormUser({ ...formUser, telefono: e.target.value })
@@ -478,7 +490,7 @@ export default function UsuariosView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#572219] mb-1">
+                <label className="block text-xs font-semibold text-[#32130E] mb-1">
                   Rol
                 </label>
                 <select
@@ -486,7 +498,7 @@ export default function UsuariosView() {
                   onChange={(e) =>
                     setFormUser({ ...formUser, idrol: Number(e.target.value) })
                   }
-                  className="w-full px-3 py-2 border border-[#D8C3B3] rounded-lg text-sm text-[#32130E] bg-white focus:outline-none focus:ring-2 focus:ring-[#572219]"
+                  className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs cursor-pointer"
                 >
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -498,7 +510,7 @@ export default function UsuariosView() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-semibold text-[#32130E] mb-1">
                 Contraseña{" "}
                 {usuarioEditando && (
                   <span className="text-[#7A5C55] font-normal">(Opcional)</span>
@@ -507,7 +519,7 @@ export default function UsuariosView() {
               <input
                 type="password"
                 required={!usuarioEditando}
-                className="w-full px-3 py-2 border border-[#D8C3B3] rounded-lg text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#572219]"
+                className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formUser.password}
                 onChange={(e) =>
                   setFormUser({ ...formUser, password: e.target.value })
@@ -515,10 +527,11 @@ export default function UsuariosView() {
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-[#F5EBE1]">
+            <div className="flex justify-end gap-3 pt-4 border-t border-[#32130E]/10">
               <Button
                 type="button"
                 variant="outline"
+                className="border-white/80 bg-white/60 text-[#32130E]"
                 onClick={() => setIsModalOpen(false)}
               >
                 Cancelar
@@ -531,23 +544,24 @@ export default function UsuariosView() {
         ) : (
           <form onSubmit={handleSubmitRol} className="space-y-4 pt-2">
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-semibold text-[#32130E] mb-1">
                 Nombre del Rol
               </label>
               <input
                 type="text"
                 required
                 placeholder="Ej. Estilista, Administrador"
-                className="w-full px-3 py-2 border border-[#D8C3B3] rounded-lg text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#572219]"
+                className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formRol.nombre}
                 onChange={(e) => setFormRol({ nombre: e.target.value })}
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-[#F5EBE1]">
+            <div className="flex justify-end gap-3 pt-4 border-t border-[#32130E]/10">
               <Button
                 type="button"
                 variant="outline"
+                className="border-white/80 bg-white/60 text-[#32130E]"
                 onClick={() => setIsModalOpen(false)}
               >
                 Cancelar

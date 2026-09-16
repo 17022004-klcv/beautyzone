@@ -10,6 +10,7 @@ import {
   FileText,
   Pencil,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import Button from "@/src/components/ui/Button";
 import Modal from "@/src/components/ui/Modal";
@@ -130,11 +131,12 @@ export default function ServiceGrid() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      {/* BARRA SUPERIOR / FILTROS Y ACCIONES */}
+      <div className="flex items-center justify-between gap-4 bg-white/40 backdrop-blur-xl border border-white/80 p-3 rounded-2xl shadow-[0_4px_20px_rgba(50,19,14,0.03)]">
         <select
           value={selectedCategoria}
           onChange={(e) => setSelectedCategoria(e.target.value)}
-          className="px-4 py-2 border border-[#D8C3B3] rounded-xl text-xs font-medium bg-[#FFFFFF] text-[#32130E] focus:outline-none"
+          className="px-4 py-2 border border-white/90 rounded-2xl text-xs font-semibold bg-white/60 text-[#32130E] focus:outline-none focus:bg-white transition-all shadow-2xs cursor-pointer"
         >
           <option value="">Todas las categorías</option>
           {categorias.map((cat) => (
@@ -149,115 +151,153 @@ export default function ServiceGrid() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5"
+              className="gap-1.5 border-white/90 bg-white/60 hover:bg-white text-[#32130E] shadow-2xs"
               onClick={() => setShowExportMenu(!showExportMenu)}
             >
-              <Download className="w-3.5 h-3.5" /> Descargar
+              <Download className="w-3.5 h-3.5 text-[#32130E]" /> Descargar
             </Button>
 
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-[#D8C3B3] rounded-xl shadow-lg z-20 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-44 bg-white/90 backdrop-blur-2xl border border-white rounded-2xl shadow-[0_12px_30px_rgba(50,19,14,0.08)] z-30 overflow-hidden p-1 space-y-0.5">
                 <button
                   onClick={() => handleExport("excel")}
-                  className="w-full px-4 py-2 text-xs font-semibold text-[#572219] hover:bg-[#F5EBE1] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   Excel (.xlsx)
                 </button>
                 <button
                   onClick={() => handleExport("pdf")}
-                  className="w-full px-4 py-2 text-xs font-semibold text-[#572219] hover:bg-[#F5EBE1] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4 text-red-600" />
+                  <FileText className="w-4 h-4 text-rose-600" />
                   PDF (.pdf)
                 </button>
               </div>
             )}
           </div>
 
-          <Button onClick={handleCreateNew} size="sm" className="gap-1.5">
+          <Button
+            onClick={handleCreateNew}
+            size="sm"
+            className="gap-1.5 shadow-sm"
+          >
             <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nuevo Servicio</span>
           </Button>
         </div>
       </div>
 
+      {/* REJILLA DE SERVICIOS */}
       {loading ? (
-        <div className="text-center py-12 text-[#7A5C55] text-xs">
+        <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-12 text-center text-[#7A5C55] text-xs font-semibold shadow-[0_8px_30px_rgba(50,19,14,0.05)]">
           Cargando catálogo de servicios...
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {servicios.map((item) => (
             <div
               key={item.id}
-              className="bg-[#FFFFFF] border border-[#D8C3B3] rounded-2xl p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-all relative"
+              className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-4 flex flex-col justify-between shadow-[0_8px_30px_rgba(50,19,14,0.04)] hover:shadow-[0_12px_35px_rgba(50,19,14,0.08)] hover:bg-white/70 transition-all duration-300 relative group"
             >
-              <div className="relative w-full h-32 bg-[#F5EBE1] rounded-xl overflow-hidden mb-3">
-                {item.imagen ? (
-                  <Image
-                    src={item.imagen}
-                    alt={item.nombre}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#7A5C55] text-xs font-medium">
-                    Sin Imagen
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <div>
-                  <p className="font-semibold text-[#32130E] text-xs line-clamp-1">
-                    {item.nombre}
-                  </p>
-                  <p className="font-serif font-bold text-[#572219] text-sm">
-                    ${Number(item.precio).toFixed(2)}
-                  </p>
-                </div>
-
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setActiveMenuId(activeMenuId === item.id ? null : item.id)
-                    }
-                    className="p-1 hover:bg-[#F5EBE1] rounded-lg text-[#7A5C55] transition-colors"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-
-                  {/* MENÚ DESPLEGABLE CON EDITAR Y ELIMINAR */}
-                  {activeMenuId === item.id && (
-                    <div className="absolute right-0 bottom-8 w-32 bg-white border border-[#D8C3B3] rounded-xl shadow-lg z-30 overflow-hidden divide-y divide-[#F5EBE1]">
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="w-full px-3 py-2 text-xs font-semibold text-[#572219] hover:bg-[#F5EBE1] flex items-center gap-2"
-                      >
-                        <Pencil className="w-3.5 h-3.5 text-blue-600" /> Editar
-                      </button>
-                      <button
-                        onClick={() => handleDeleteServicio(item.id)}
-                        className="w-full px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                      </button>
+              <div>
+                {/* CONTENEDOR DE IMAGEN CON EFECTO VIDRIO */}
+                <div className="relative w-full h-36 bg-[#F5EBE1]/60 rounded-2xl overflow-hidden mb-3.5 border border-white/80 shadow-2xs">
+                  {item.imagen ? (
+                    <Image
+                      src={item.imagen}
+                      alt={item.nombre}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-[#7A5C55]/60 text-xs font-medium gap-1">
+                      <Sparkles className="w-5 h-5 stroke-[1.5]" />
+                      <span className="text-[10px]">Sin imagen</span>
                     </div>
                   )}
+
+                  {/* BADGE DE CATEGORÍA */}
+                  {item.categoria && (
+                    <span className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-white/80 backdrop-blur-md border border-white text-[#32130E] text-[10px] font-extrabold rounded-full shadow-2xs">
+                      {item.categoria.nombre}
+                    </span>
+                  )}
                 </div>
+
+                {/* DETALLES DEL SERVICIO */}
+                <div className="flex items-start justify-between gap-2 pt-1">
+                  <div>
+                    <h4 className="font-bold text-[#32130E] text-xs leading-snug line-clamp-1">
+                      {item.nombre}
+                    </h4>
+                    <p className="font-serif font-extrabold text-[#32130E] text-base mt-0.5">
+                      ${Number(item.precio).toFixed(2)}
+                    </p>
+                  </div>
+
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveMenuId(
+                          activeMenuId === item.id ? null : item.id,
+                        )
+                      }
+                      className="p-1.5 hover:bg-white/80 rounded-xl text-[#7A5C55] transition-colors border border-transparent hover:border-white/80 shadow-2xs"
+                    >
+                      <MoreVertical className="w-4 h-4 text-[#32130E]" />
+                    </button>
+
+                    {/* MENÚ ACCIONES CON GLASSMORPHISM */}
+                    {activeMenuId === item.id && (
+                      <div className="absolute right-0 bottom-9 w-36 bg-white/90 backdrop-blur-2xl border border-white rounded-2xl shadow-[0_12px_30px_rgba(50,19,14,0.1)] z-30 p-1 space-y-0.5">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="w-full px-3 py-1.5 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
+                        >
+                          <Pencil className="w-3.5 h-3.5 text-blue-600" />{" "}
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteServicio(item.id)}
+                          className="w-full px-3 py-1.5 text-xs font-semibold text-[#B83A3A] hover:bg-[#B83A3A]/10 rounded-xl transition-colors flex items-center gap-2"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-[#B83A3A]" />{" "}
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* FOOTER DE CADA TARJETA (ESTADO / COMISIÓN) */}
+              <div className="mt-3 pt-2.5 border-t border-[#32130E]/10 flex items-center justify-between text-[10px] font-semibold text-[#7A5C55]">
+                <span>Comisión: {Number(item.porcentajeComision || 0)}%</span>
+                <span
+                  className={`px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${
+                    item.estado
+                      ? "bg-[#2E6F40]/10 border-[#2E6F40]/20 text-[#2E6F40]"
+                      : "bg-[#B83A3A]/10 border-[#B83A3A]/20 text-[#B83A3A]"
+                  }`}
+                >
+                  {item.estado ? "Activo" : "Inactivo"}
+                </span>
               </div>
             </div>
           ))}
 
           {servicios.length === 0 && (
-            <div className="col-span-full text-center py-12 text-xs text-[#7A5C55]">
+            <div className="col-span-full bg-white/40 backdrop-blur-md border border-white/80 rounded-3xl text-center py-12 text-xs text-[#7A5C55] font-semibold shadow-2xs">
               No hay servicios registrados en esta categoría.
             </div>
           )}
         </div>
       )}
 
+      {/* MODAL PARA CREAR / EDITAR */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

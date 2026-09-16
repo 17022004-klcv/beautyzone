@@ -16,21 +16,25 @@ export default function KpiCard({
   icon,
 }: KpiCardProps) {
   return (
-    <div className="bg-[#FFFFFF] p-5 rounded-2xl border border-[#D8C3B3] shadow-sm flex items-center justify-between">
+    <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/90 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex items-center justify-between transition-all duration-300 hover:bg-white/70 hover:shadow-[0_12px_40px_rgba(50,19,14,0.08)] hover:-translate-y-1">
       <div className="space-y-1">
-        <p className="text-xs font-semibold text-[#7A5C55] uppercase tracking-wider">
+        <p className="text-[11px] font-bold text-[#7A5C55] uppercase tracking-wider">
           {title}
         </p>
-        <p className="font-serif text-2xl font-bold text-[#32130E]">{value}</p>
+        <p className="font-serif text-3xl font-extrabold text-[#32130E] tracking-tight">
+          {value}
+        </p>
         {change && (
           <p
-            className={`text-xs font-medium ${isPositive ? "text-[#2E6F40]" : "text-[#B83A3A]"}`}
+            className={`text-xs font-bold ${
+              isPositive ? "text-[#2E6F40]" : "text-[#B83A3A]"
+            }`}
           >
             {change}
           </p>
         )}
       </div>
-      <div className="w-12 h-12 rounded-xl bg-[#F5EBE1] text-[#572219] flex items-center justify-center">
+      <div className="w-12 h-12 rounded-2xl bg-[#32130E] text-[#F5EBE1] shadow-lg flex items-center justify-center">
         {icon}
       </div>
     </div>

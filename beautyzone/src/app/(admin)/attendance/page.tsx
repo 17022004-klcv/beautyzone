@@ -152,35 +152,35 @@ export default function AsistenciasView() {
     setFiltroFecha("");
   };
 
-  // Formatear Badge de Tipo de Registro
+  // Formatear Badge de Tipo de Registro estilo Glassmorphism
   const renderTipoBadge = (tipo: TipoRegistro) => {
     const config: Record<TipoRegistro, { label: string; style: string }> = {
       ENTRADA: {
         label: "Entrada",
-        style: "bg-emerald-100 text-emerald-800 border-emerald-300",
+        style: "bg-[#2E6F40]/10 border-[#2E6F40]/20 text-[#2E6F40]",
       },
       SALIDA_ALMUERZO: {
         label: "Salida Almuerzo",
-        style: "bg-amber-100 text-amber-800 border-amber-300",
+        style: "bg-amber-500/10 border-amber-500/20 text-amber-800",
       },
       ENTRADA_ALMUERZO: {
         label: "Entrada Almuerzo",
-        style: "bg-blue-100 text-blue-800 border-blue-300",
+        style: "bg-sky-500/10 border-sky-500/20 text-sky-800",
       },
       SALIDA: {
         label: "Salida",
-        style: "bg-rose-100 text-rose-800 border-rose-300",
+        style: "bg-[#B83A3A]/10 border-[#B83A3A]/20 text-[#B83A3A]",
       },
     };
 
     const item = config[tipo] || {
       label: tipo,
-      style: "bg-stone-100 text-stone-800 border-stone-300",
+      style: "bg-stone-500/10 border-stone-500/20 text-[#32130E]",
     };
 
     return (
       <span
-        className={`px-2.5 py-1 text-xs font-semibold rounded-md border ${item.style}`}
+        className={`px-2.5 py-0.5 text-[9px] font-bold rounded-full border uppercase tracking-wider ${item.style}`}
       >
         {item.label}
       </span>
@@ -194,14 +194,14 @@ export default function AsistenciasView() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* CABECERA */}
+      {/* CABECERA SIN TARJETA */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-[#32130E] flex items-center gap-2">
-            <Clock className="w-6 h-6 text-[#572219]" />
+          <h1 className="text-2xl font-serif font-bold text-[#32130E] flex items-center gap-2.5">
+            <Clock className="w-6 h-6 text-[#32130E]" />
             Control de Asistencia
           </h1>
-          <p className="text-xs text-[#7A5C55] mt-1">
+          <p className="text-xs font-medium text-[#7A5C55] mt-1">
             Registro y seguimiento de marcaciones de entradas y salidas del
             personal
           </p>
@@ -213,27 +213,27 @@ export default function AsistenciasView() {
             <Button
               variant="outline"
               size="md"
-              className="gap-2 text-sm font-semibold"
+              className="gap-2 text-xs font-semibold border-white/90 bg-white/60 hover:bg-white text-[#32130E] shadow-2xs"
               onClick={() => setShowExportMenu(!showExportMenu)}
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 text-[#32130E]" />
               <span>Exportar</span>
             </Button>
 
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-[#D8C3B3] rounded-xl shadow-lg z-20 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-44 bg-white/90 backdrop-blur-2xl border border-white rounded-2xl shadow-[0_12px_30px_rgba(50,19,14,0.08)] z-30 overflow-hidden p-1 space-y-0.5">
                 <button
                   onClick={() => handleExport("excel")}
-                  className="w-full px-4 py-2 text-xs font-semibold text-[#572219] hover:bg-[#F5EBE1] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   Excel (.xlsx)
                 </button>
                 <button
                   onClick={() => handleExport("pdf")}
-                  className="w-full px-4 py-2 text-xs font-semibold text-[#572219] hover:bg-[#F5EBE1] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4 text-red-600" />
+                  <FileText className="w-4 h-4 text-rose-600" />
                   PDF (.pdf)
                 </button>
               </div>
@@ -243,17 +243,17 @@ export default function AsistenciasView() {
           {/* BOTÓN REGISTRAR MARCA */}
           <Button
             size="md"
-            className="gap-2 px-4 py-2.5 text-sm font-semibold"
+            className="gap-2 px-4 py-2 text-xs font-semibold shadow-sm"
             onClick={handleOpenModal}
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             <span>Registrar Acceso</span>
           </Button>
         </div>
       </div>
 
-      {/* BARRA DE FILTROS */}
-      <div className="bg-white border border-[#D8C3B3] rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center gap-3">
+      {/* BARRA DE FILTROS GLASSMORPHISM */}
+      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-4 shadow-[0_8px_30px_rgba(50,19,14,0.04)] flex flex-col md:flex-row items-center gap-3">
         {/* Buscador de Nombre */}
         <div className="w-full md:w-72">
           <SearchBar
@@ -268,7 +268,7 @@ export default function AsistenciasView() {
           <select
             value={filtroTipo}
             onChange={(e) => setFiltroTipo(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] text-[#32130E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+            className="w-full px-3 py-2 text-xs font-medium bg-white/60 border border-white/80 text-[#32130E] rounded-2xl focus:outline-none focus:bg-white transition-all shadow-2xs cursor-pointer"
           >
             <option value="">Todos los registros</option>
             {OPCIONES_TIPO_REGISTRO.map((opt) => (
@@ -280,12 +280,12 @@ export default function AsistenciasView() {
         </div>
 
         {/* Filtro Fecha */}
-        <div className="w-full md:w-48 relative">
+        <div className="w-full md:w-48">
           <input
             type="date"
             value={filtroFecha}
             onChange={(e) => setFiltroFecha(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] text-[#32130E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+            className="w-full px-3 py-2 text-xs font-medium bg-white/60 border border-white/80 text-[#32130E] rounded-2xl focus:outline-none focus:bg-white transition-all shadow-2xs cursor-pointer"
           />
         </div>
 
@@ -295,25 +295,25 @@ export default function AsistenciasView() {
             variant="ghost"
             size="sm"
             onClick={handleLimpiarFiltros}
-            className="text-xs text-[#7A5C55] gap-1 hover:text-[#32130E]"
+            className="text-xs font-semibold text-[#7A5C55] gap-1 hover:text-[#32130E] hover:bg-white/50 rounded-2xl"
           >
-            <FilterX className="w-4 h-4" />
+            <FilterX className="w-3.5 h-3.5" />
             Limpiar
           </Button>
         )}
       </div>
 
-      {/* TABLA DE ASISTENCIAS */}
-      <div className="bg-[#FFFFFF] border border-[#D8C3B3] rounded-2xl p-6 shadow-sm min-h-[400px]">
+      {/* TABLA DE ASISTENCIAS CON GLASSMORPHISM */}
+      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.04)] min-h-[400px]">
         {loading ? (
-          <div className="flex justify-center items-center py-20 text-[#7A5C55] text-sm">
+          <div className="flex justify-center items-center py-20 text-[#7A5C55] text-xs font-semibold">
             Cargando registros de asistencia...
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#D8C3B3] text-xs font-bold text-[#572219]">
+                <tr className="border-b border-[#32130E]/10 text-xs font-bold text-[#32130E]">
                   <th className="py-3 px-4">Empleado</th>
                   <th className="py-3 px-4">Rol</th>
                   <th className="py-3 px-4">Fecha</th>
@@ -322,20 +322,23 @@ export default function AsistenciasView() {
                   <th className="py-3 px-4 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F5EBE1]">
+              <tbody className="divide-y divide-[#32130E]/5">
                 {asistencias.map((a) => (
-                  <tr key={a.id} className="hover:bg-[#F5EBE1]/40 text-sm">
-                    <td className="py-3 px-4 font-semibold text-[#32130E]">
+                  <tr
+                    key={a.id}
+                    className="hover:bg-white/60 transition-colors text-xs font-medium"
+                  >
+                    <td className="py-3.5 px-4 font-bold text-[#32130E]">
                       {a.empleado
                         ? `${a.empleado.nombre} ${a.empleado.apellido}`
                         : "Empleado Desconocido"}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="bg-[#F5EBE1] text-[#572219] px-2 py-0.5 rounded text-xs border border-[#D8C3B3]">
+                    <td className="py-3.5 px-4">
+                      <span className="bg-white/80 text-[#32130E] px-2.5 py-1 rounded-full text-[10px] font-bold border border-white shadow-2xs">
                         {a.empleado?.rol?.nombre || "Sin Rol"}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-[#7A5C55] font-medium">
+                    <td className="py-3.5 px-4 text-[#7A5C55]">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-[#7A5C55]" />
                         {new Date(a.fecha).toLocaleDateString("es-SV", {
@@ -343,19 +346,19 @@ export default function AsistenciasView() {
                         })}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-[#32130E] font-mono font-bold">
+                    <td className="py-3.5 px-4 text-[#32130E] font-mono font-bold">
                       {a.hora}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       {renderTipoBadge(a.tipoRegistro)}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={() => handleEliminar(a.id)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition"
+                        className="p-1.5 text-[#B83A3A] hover:bg-[#B83A3A]/10 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs"
                         title="Eliminar registro"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -364,7 +367,7 @@ export default function AsistenciasView() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="text-center py-12 text-xs text-[#7A5C55]"
+                      className="text-center py-12 text-xs text-[#7A5C55] font-semibold"
                     >
                       No se encontraron registros de asistencia con los filtros
                       aplicados.
@@ -387,7 +390,7 @@ export default function AsistenciasView() {
         <form onSubmit={handleSubmitMarca} className="space-y-4 pt-2">
           {/* Seleccionar Empleado con SearchableSelect */}
           <div>
-            <label className="block text-xs font-semibold text-[#572219] mb-1">
+            <label className="block text-xs font-semibold text-[#32130E] mb-1">
               Empleado
             </label>
             <SearchableSelect
@@ -404,7 +407,7 @@ export default function AsistenciasView() {
 
           {/* Tipo de Registro */}
           <div>
-            <label className="block text-xs font-semibold text-[#572219] mb-1">
+            <label className="block text-xs font-semibold text-[#32130E] mb-1">
               Tipo de Registro
             </label>
             <select
@@ -415,7 +418,7 @@ export default function AsistenciasView() {
                   tipoRegistro: e.target.value as TipoRegistro,
                 })
               }
-              className="w-full px-3 py-2.5 border border-[#D8C3B3] rounded-xl text-sm text-[#32130E] bg-white focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+              className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs cursor-pointer"
             >
               {OPCIONES_TIPO_REGISTRO.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -425,16 +428,16 @@ export default function AsistenciasView() {
             </select>
           </div>
 
-          {/* Fecha y Hora (Opcionales / Editables) */}
+          {/* Fecha y Hora */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-semibold text-[#32130E] mb-1">
                 Fecha
               </label>
               <input
                 type="date"
                 required
-                className="w-full px-3 py-2 border border-[#D8C3B3] rounded-xl text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formMarca.fecha}
                 onChange={(e) =>
                   setFormMarca({ ...formMarca, fecha: e.target.value })
@@ -442,13 +445,13 @@ export default function AsistenciasView() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-semibold text-[#32130E] mb-1">
                 Hora (HH:mm)
               </label>
               <input
                 type="time"
                 required
-                className="w-full px-3 py-2 border border-[#D8C3B3] rounded-xl text-sm text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                className="w-full px-3 py-2 border border-white/80 rounded-2xl text-xs text-[#32130E] bg-white/60 focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formMarca.hora}
                 onChange={(e) =>
                   setFormMarca({ ...formMarca, hora: e.target.value })
@@ -458,10 +461,11 @@ export default function AsistenciasView() {
           </div>
 
           {/* Acciones */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#F5EBE1]">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#32130E]/10">
             <Button
               type="button"
               variant="outline"
+              className="border-white/80 bg-white/60 text-[#32130E]"
               onClick={() => setIsModalOpen(false)}
             >
               Cancelar

@@ -30,29 +30,29 @@ export default function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#32130E]/20 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div
-        className={`bg-[#FFFFFF] border border-[#D8C3B3] rounded-2xl w-full ${maxWidthClasses[maxWidth]} p-6 shadow-xl space-y-4 animate-in fade-in duration-200`}
+        className={`bg-white/80 backdrop-blur-2xl border border-white rounded-3xl w-full ${maxWidthClasses[maxWidth]} p-6 shadow-[0_16px_40px_rgba(50,19,14,0.12)] space-y-4`}
       >
-        {/* CABECERA REUTILIZABLE */}
-        <div className="flex items-start justify-between border-b border-[#D8C3B3] pb-3">
+        <div className="flex items-start justify-between border-b border-[#32130E]/10 pb-3.5">
           <div>
             <h2 className="font-serif font-bold text-xl text-[#32130E]">
               {title}
             </h2>
             {subtitle && (
-              <p className="text-xs text-[#7A5C55] mt-0.5">{subtitle}</p>
+              <p className="text-xs font-medium text-[#7A5C55] mt-0.5">
+                {subtitle}
+              </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-[#F5EBE1] rounded-lg text-[#7A5C55] transition-colors"
+            className="p-1.5 hover:bg-white rounded-xl text-[#7A5C55] hover:text-[#32130E] transition-all border border-transparent hover:border-white shadow-2xs"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* CONTENIDO (FORMULARIO O LO QUE PASEO POR PROPS) */}
         <div>{children}</div>
       </div>
     </div>

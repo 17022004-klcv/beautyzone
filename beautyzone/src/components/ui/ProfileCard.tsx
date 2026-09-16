@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import {
-  User,
   Mail,
   Phone,
   ShieldCheck,
@@ -13,13 +12,12 @@ import {
   Clock,
 } from "lucide-react";
 
-// UI & Servicios
 import Button from "@/src/components/ui/Button";
 import { PerfilUsuario, ActualizarPerfilDTO } from "@/src/app/types/perfil";
 import { PerfilService } from "@/src/app/services/perfil.service";
 
 interface ProfileCardProps {
-  userId: number; // ID del usuario en sesión
+  userId: number;
 }
 
 export default function ProfileCard({ userId }: ProfileCardProps) {
@@ -27,7 +25,6 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
-  // Estados del formulario
   const [formData, setFormData] = useState<ActualizarPerfilDTO>({
     nombre: "",
     apellido: "",
@@ -37,11 +34,9 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
     nuevaPassword: "",
   });
 
-  // Mensajes de Feedback
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
 
-  // Cargar datos iniciales del perfil
   useEffect(() => {
     async function loadPerfil() {
       try {
@@ -75,7 +70,6 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
     setMensajeExito(null);
     setMensajeError(null);
 
-    // Validar contraseña si intenta cambiarla
     if (formData.nuevaPassword && !formData.passwordActual) {
       setMensajeError(
         "Debes ingresar tu contraseña actual para establecer una nueva.",
@@ -91,7 +85,6 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
       );
       setPerfil(usuarioActualizado);
 
-      // Limpiar campos de contraseñas
       setFormData((prev) => ({
         ...prev,
         passwordActual: "",
@@ -109,7 +102,7 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
 
   if (loading) {
     return (
-      <div className="bg-white border border-[#D8C3B3] rounded-2xl p-8 flex justify-center items-center text-[#7A5C55] text-sm">
+      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-8 flex justify-center items-center text-[#7A5C55] text-xs font-semibold shadow-[0_8px_30px_rgba(50,19,14,0.05)]">
         Cargando datos del perfil...
       </div>
     );
@@ -117,21 +110,20 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
 
   if (!perfil) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-sm">
+      <div className="bg-rose-50/80 backdrop-blur-md border border-rose-200 text-rose-800 p-4 rounded-2xl text-xs font-semibold">
         No se pudo cargar el perfil del usuario.
       </div>
     );
   }
 
-  // Iniciales para el Avatar
   const iniciales =
     `${perfil.nombre.charAt(0)}${perfil.apellido.charAt(0)}`.toUpperCase();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* TARJETA IZQUIERDA: RESUMEN DE USUARIO */}
-      <div className="bg-white border border-[#D8C3B3] rounded-2xl p-6 shadow-sm flex flex-col items-center text-center">
-        <div className="w-24 h-24 rounded-full bg-[#572219] text-[#F5EBE1] flex items-center justify-center text-2xl font-bold font-serif mb-4 shadow-inner border-2 border-[#D8C3B3]">
+      {/* RESUMEN DE USUARIO */}
+      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex flex-col items-center text-center">
+        <div className="w-24 h-24 rounded-full bg-[#32130E] text-[#F5EBE1] flex items-center justify-center text-2xl font-bold font-serif mb-4 shadow-md border-2 border-white">
           {iniciales}
         </div>
 
@@ -139,28 +131,28 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
           {perfil.nombre} {perfil.apellido}
         </h2>
 
-        <span className="mt-2 px-3 py-1 bg-[#F5EBE1] border border-[#D8C3B3] text-[#572219] text-xs font-bold rounded-full uppercase tracking-wider">
+        <span className="mt-2 px-3 py-1 bg-white/80 border border-white text-[#32130E] text-[10px] font-extrabold rounded-full uppercase tracking-wider shadow-2xs">
           {perfil.rol.nombre}
         </span>
 
-        <div className="w-full border-t border-[#F5EBE1] my-6"></div>
+        <div className="w-full border-t border-[#32130E]/10 my-6"></div>
 
-        <div className="w-full space-y-3 text-left text-xs text-[#7A5C55]">
-          <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#572219]" />
+        <div className="w-full space-y-3 text-left text-xs font-medium text-[#7A5C55]">
+          <div className="flex items-center gap-2.5">
+            <Mail className="w-4 h-4 text-[#32130E]" />
             <span className="truncate">{perfil.correo}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Phone className="w-4 h-4 text-[#572219]" />
+          <div className="flex items-center gap-2.5">
+            <Phone className="w-4 h-4 text-[#32130E]" />
             <span>{perfil.telefono || "Sin teléfono registrado"}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#572219]" />
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck className="w-4 h-4 text-[#32130E]" />
             <span>Estado: {perfil.estado ? "Activo" : "Inactivo"}</span>
           </div>
           {perfil.createdAt && (
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#572219]" />
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-[#32130E]" />
               <span>
                 Miembro desde:{" "}
                 {new Date(perfil.createdAt).toLocaleDateString("es-SV", {
@@ -173,41 +165,39 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
         </div>
       </div>
 
-      {/* FORMULARIO DERECHO: EDICIÓN DE DATOS */}
-      <div className="lg:col-span-2 bg-white border border-[#D8C3B3] rounded-2xl p-6 shadow-sm">
+      {/* FORMULARIO DE EDICIÓN */}
+      <div className="lg:col-span-2 bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.05)]">
         <h3 className="text-lg font-bold font-serif text-[#32130E] mb-1">
           Editar Información Personal
         </h3>
-        <p className="text-xs text-[#7A5C55] mb-6">
+        <p className="text-xs font-medium text-[#7A5C55] mb-6">
           Actualiza tus datos de contacto o cambia tu contraseña de acceso
         </p>
 
-        {/* Notificaciones */}
         {mensajeExito && (
-          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <div className="mb-4 p-3 bg-[#2E6F40]/10 border border-[#2E6F40]/20 text-[#2E6F40] rounded-2xl text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
             {mensajeExito}
           </div>
         )}
 
         {mensajeError && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600" />
+          <div className="mb-4 p-3 bg-[#B83A3A]/10 border border-[#B83A3A]/20 text-[#B83A3A] rounded-2xl text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
             {mensajeError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nombre y Apellido */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-bold text-[#32130E] mb-1">
                 Nombre
               </label>
               <input
                 type="text"
                 required
-                className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] rounded-xl text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                className="w-full px-3.5 py-2 text-xs bg-white/60 border border-white/90 rounded-2xl text-[#32130E] focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formData.nombre}
                 onChange={(e) =>
                   setFormData({ ...formData, nombre: e.target.value })
@@ -215,13 +205,13 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-bold text-[#32130E] mb-1">
                 Apellido
               </label>
               <input
                 type="text"
                 required
-                className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] rounded-xl text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                className="w-full px-3.5 py-2 text-xs bg-white/60 border border-white/90 rounded-2xl text-[#32130E] focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formData.apellido}
                 onChange={(e) =>
                   setFormData({ ...formData, apellido: e.target.value })
@@ -230,16 +220,15 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
             </div>
           </div>
 
-          {/* Correo y Teléfono */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-bold text-[#32130E] mb-1">
                 Correo Electrónico
               </label>
               <input
                 type="email"
                 required
-                className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] rounded-xl text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                className="w-full px-3.5 py-2 text-xs bg-white/60 border border-white/90 rounded-2xl text-[#32130E] focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formData.correo}
                 onChange={(e) =>
                   setFormData({ ...formData, correo: e.target.value })
@@ -247,13 +236,13 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#572219] mb-1">
+              <label className="block text-xs font-bold text-[#32130E] mb-1">
                 Teléfono
               </label>
               <input
                 type="text"
                 placeholder="Ej. 7890-1234"
-                className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] rounded-xl text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                className="w-full px-3.5 py-2 text-xs bg-white/60 border border-white/90 rounded-2xl text-[#32130E] placeholder-[#7A5C55] focus:outline-none focus:bg-white transition-all shadow-2xs"
                 value={formData.telefono || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, telefono: e.target.value })
@@ -262,22 +251,21 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
             </div>
           </div>
 
-          {/* SECCIÓN CAMBIO DE CONTRASEÑA */}
-          <div className="pt-4 mt-4 border-t border-[#F5EBE1]">
-            <h4 className="text-sm font-bold text-[#32130E] flex items-center gap-2 mb-3">
-              <Key className="w-4 h-4 text-[#572219]" />
+          <div className="pt-4 mt-4 border-t border-[#32130E]/10">
+            <h4 className="text-xs font-bold text-[#32130E] flex items-center gap-2 mb-3">
+              <Key className="w-4 h-4 text-[#32130E]" />
               Cambiar Contraseña (Opcional)
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#572219] mb-1">
+                <label className="block text-xs font-bold text-[#32130E] mb-1">
                   Contraseña Actual
                 </label>
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] rounded-xl text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                  className="w-full px-3.5 py-2 text-xs bg-white/60 border border-white/90 rounded-2xl text-[#32130E] placeholder-[#7A5C55] focus:outline-none focus:bg-white transition-all shadow-2xs"
                   value={formData.passwordActual}
                   onChange={(e) =>
                     setFormData({ ...formData, passwordActual: e.target.value })
@@ -285,13 +273,13 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#572219] mb-1">
+                <label className="block text-xs font-bold text-[#32130E] mb-1">
                   Nueva Contraseña
                 </label>
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 text-sm bg-white border border-[#D8C3B3] rounded-xl text-[#32130E] focus:outline-none focus:ring-2 focus:ring-[#9D4B4C]"
+                  className="w-full px-3.5 py-2 text-xs bg-white/60 border border-white/90 rounded-2xl text-[#32130E] placeholder-[#7A5C55] focus:outline-none focus:bg-white transition-all shadow-2xs"
                   value={formData.nuevaPassword}
                   onChange={(e) =>
                     setFormData({ ...formData, nuevaPassword: e.target.value })
@@ -301,12 +289,13 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
             </div>
           </div>
 
-          {/* BOTÓN GUARDAR */}
           <div className="flex justify-end pt-4">
             <Button
               type="submit"
               disabled={saving}
-              className="gap-2 px-6 py-2.5 text-sm font-semibold"
+              variant="primary"
+              size="md"
+              className="gap-2"
             >
               <Save className="w-4 h-4" />
               {saving ? "Guardando..." : "Guardar Cambios"}

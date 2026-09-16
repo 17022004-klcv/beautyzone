@@ -14,14 +14,12 @@ export default function AdminLayout({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showPosSidebar, setShowPosSidebar] = useState(false);
 
-  // Al cambiar a la ruta POS, fuerza la ocultación inicial
   useEffect(() => {
     if (isPosPage) {
       setShowPosSidebar(false);
     }
   }, [pathname, isPosPage]);
 
-  // Manejo de la tecla ESC (exclusivo para la vista POS)
   useEffect(() => {
     if (!isPosPage) return;
 
@@ -36,19 +34,25 @@ export default function AdminLayout({
   }, [isPosPage]);
 
   return (
-    <div className="min-h-screen bg-[#F0ECEA] relative flex overflow-hidden w-full">
+    <div className="min-h-screen bg-[#F6F2EF] relative flex overflow-hidden w-full">
+      {/* ORBES DE LUZ Y COLOR PARA LOGRAR EL GLASSMORPHISM REAL */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Esfera Rosada / Rose Gold */}
+        <div className="absolute -top-24 -left-20 w-[450px] h-[450px] rounded-full bg-[#E8C5B8]/60 blur-[120px]" />
+        {/* Esfera Champán Cálida */}
+        <div className="absolute top-1/3 left-10 w-[380px] h-[380px] rounded-full bg-[#D1B8AA]/50 blur-[130px]" />
+        {/* Esfera Inferior Bronce suave */}
+        <div className="absolute -bottom-20 left-1/3 w-[550px] h-[550px] rounded-full bg-[#E5D4C0]/60 blur-[160px]" />
+      </div>
+
       {isPosPage ? (
-        /* ================= MODO POS ================= */
         <>
-          {/* Si showPosSidebar es TRUE, muestra el Sidebar flotante por encima */}
           {showPosSidebar && (
             <>
-              {/* Fondo semitransparente para cerrar al hacer clic afuera */}
               <div
-                className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+                className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 transition-opacity"
                 onClick={() => setShowPosSidebar(false)}
               />
-              {/* Contenedor del Sidebar Flotante */}
               <div className="fixed top-0 left-0 h-full z-50 shadow-2xl">
                 <AdminSidebar
                   isCollapsed={isCollapsed}
@@ -59,7 +63,6 @@ export default function AdminLayout({
           )}
         </>
       ) : (
-        /* ================= MODO NORMAL ================= */
         <div className="fixed top-0 left-0 h-full z-50">
           <AdminSidebar
             isCollapsed={isCollapsed}
@@ -68,13 +71,8 @@ export default function AdminLayout({
         </div>
       )}
 
-      {/* 
-        CONTENIDO PRINCIPAL:
-        - En POS: Cero padding (pl-0). El POS abarca el 100% real del ancho.
-        - En resto de páginas: Padding según colapso (pl-64 / pl-20).
-      */}
       <main
-        className={`w-full min-h-screen transition-all duration-300 ${
+        className={`w-full min-h-screen z-10 relative transition-all duration-300 ${
           isPosPage ? "pl-0" : isCollapsed ? "pl-20" : "pl-64"
         }`}
       >

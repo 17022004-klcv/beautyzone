@@ -44,21 +44,21 @@ export function AdminSidebar({
 
   return (
     <aside
-      className={`h-screen bg-[#EADBCF] text-[#32130E] flex flex-col justify-between border-r border-[#D8C3B3] p-3 fixed left-0 top-0 z-40 transition-all duration-300 ${
+      className={`h-screen text-[#32130E] flex flex-col justify-between p-3 fixed left-0 top-0 z-40 transition-all duration-300 bg-white/45 backdrop-blur-2xl border-r border-white/80 shadow-[8px_0_32px_rgba(50,19,14,0.06)] overflow-hidden ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >
       <div>
-        {/* LOGO SUPERIOR Y BOTÓN COLAPSABLE */}
+        {/* LOGO SUPERIOR */}
         <div
-          className={`flex items-center py-3 mb-4 border-b border-[#D8C3B3]/60 ${
+          className={`flex items-center py-3 mb-4 border-b border-[#32130E]/10 ${
             isCollapsed ? "justify-center" : "justify-between px-2"
           }`}
         >
           {!isCollapsed && (
             <div className="flex items-center gap-3 overflow-hidden">
               <Link href="/" className="flex-shrink-0">
-                <div className="relative w-9 h-9 overflow-hidden rounded-full border border-[#D8C3B3]">
+                <div className="relative w-9 h-9 overflow-hidden rounded-xl border border-white shadow-md">
                   <Image
                     src={Logo}
                     alt="B-Zone Logo"
@@ -72,7 +72,7 @@ export function AdminSidebar({
                 <h2 className="font-serif text-base font-bold tracking-wide text-[#32130E]">
                   BeautyZone
                 </h2>
-                <span className="text-[9px] text-[#7A5C55] font-semibold tracking-widest uppercase block">
+                <span className="text-[9px] text-[#7A5C55] font-bold tracking-widest uppercase block">
                   Admin Panel
                 </span>
               </div>
@@ -81,19 +81,19 @@ export function AdminSidebar({
 
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 text-[#7A5C55] hover:text-[#32130E] hover:bg-[#F5EBE1] rounded-xl transition-colors flex-shrink-0"
+            className="p-2 text-[#7A5C55] hover:text-[#32130E] hover:bg-white/60 rounded-xl transition-all flex-shrink-0"
             title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
           >
             {isCollapsed ? (
-              <PanelLeftOpen className="w-5 h-5 text-[#572219]" />
+              <PanelLeftOpen className="w-5 h-5 text-[#32130E]" />
             ) : (
-              <PanelLeftClose className="w-5 h-5 text-[#572219]" />
+              <PanelLeftClose className="w-5 h-5 text-[#32130E]" />
             )}
           </button>
         </div>
 
         {/* NAVEGACIÓN PRINCIPAL */}
-        <nav className="space-y-1">
+        <nav className="space-y-1.5">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -103,15 +103,19 @@ export function AdminSidebar({
                 key={item.name}
                 href={item.href}
                 title={isCollapsed ? item.name : undefined}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 relative overflow-hidden ${
                   isActive
-                    ? "bg-[#F5EBE1] text-[#572219] font-bold border border-[#D8C3B3] shadow-sm"
-                    : "text-[#7A5C55] hover:text-[#32130E] hover:bg-[#F5EBE1]/60"
+                    ? "bg-white/90 text-[#32130E] font-bold shadow-md border border-white"
+                    : "text-[#6E554F] hover:text-[#32130E] hover:bg-white/50"
                 } ${isCollapsed ? "justify-center px-0" : ""}`}
               >
+                {/* LÍNEA INDICADORA FINITA Y DELICADA */}
+                {isActive && (
+                  <span className="absolute left-1 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-[#32130E] rounded-full" />
+                )}
                 <Icon
-                  className={`w-4 h-4 flex-shrink-0 ${
-                    isActive ? "text-[#9D4B4C]" : "text-[#7A5C55]"
+                  className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                    isActive ? "text-[#32130E]" : "text-[#8C7167]"
                   }`}
                 />
                 {!isCollapsed && <span className="truncate">{item.name}</span>}
@@ -121,9 +125,9 @@ export function AdminSidebar({
         </nav>
       </div>
 
-      {/* FOOTER: PERFIL Y CONFIGURACIÓN */}
+      {/* FOOTER */}
       <div
-        className={`pt-3 border-t border-[#D8C3B3] flex items-center justify-between ${
+        className={`pt-3 border-t border-[#32130E]/10 flex items-center justify-between ${
           isCollapsed ? "flex-col gap-2" : "px-2"
         }`}
       >
@@ -132,7 +136,7 @@ export function AdminSidebar({
           title={isCollapsed ? "Mi Perfil" : undefined}
           className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
         >
-          <div className="w-8 h-8 rounded-full bg-[#572219] text-[#FFFFFF] border border-[#D8C3B3] flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-[#32130E] text-[#F5EBE1] shadow-md border border-white/20 flex items-center justify-center flex-shrink-0">
             <User className="w-4 h-4" />
           </div>
           {!isCollapsed && (
@@ -146,7 +150,7 @@ export function AdminSidebar({
 
         <Link
           href="/dashboard/configuracion"
-          className="p-1.5 text-[#7A5C55] hover:text-[#32130E] hover:bg-[#F5EBE1] rounded-lg transition-colors"
+          className="p-2 text-[#7A5C55] hover:text-[#32130E] hover:bg-white/60 rounded-xl transition-all"
           title="Configuración"
         >
           <Settings className="w-4 h-4" />

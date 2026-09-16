@@ -4,14 +4,7 @@ import { useState, useEffect } from "react";
 import { DashboardStats } from "@/src/app/types/dashboard";
 import PageTitle from "@/src/components/ui/PageTitle";
 import KpiCard from "@/src/components/admin/KpiCard";
-import {
-  Calendar,
-  CalendarDays,
-  Users,
-  CheckCircle2,
-  Package,
-  Scissors,
-} from "lucide-react";
+import { Calendar, CalendarDays, Users, Package, Scissors } from "lucide-react";
 
 export default function AdminHomePage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -43,7 +36,7 @@ export default function AdminHomePage() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-8 bg-[#F0ECEA] min-h-screen">
+    <div className="p-6 md:p-8 space-y-8 min-h-screen">
       {/* CABECERA */}
       <PageTitle
         title="Dashboard de Estadísticas"
@@ -57,7 +50,7 @@ export default function AdminHomePage() {
           value={stats?.citasDia ?? 0}
           change="Hoy"
           isPositive={true}
-          icon={<Calendar className="w-6 h-6" />}
+          icon={<Calendar className="w-5 h-5 text-[#F5EBE1]" />}
         />
 
         <KpiCard
@@ -65,7 +58,7 @@ export default function AdminHomePage() {
           value={stats?.citasSemana ?? 0}
           change="Esta semana"
           isPositive={true}
-          icon={<CalendarDays className="w-6 h-6" />}
+          icon={<CalendarDays className="w-5 h-5 text-[#F5EBE1]" />}
         />
 
         <KpiCard
@@ -73,21 +66,21 @@ export default function AdminHomePage() {
           value={stats?.totalClientes ?? 0}
           change="Registrados"
           isPositive={true}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-5 h-5 text-[#F5EBE1]" />}
         />
       </div>
 
       {/* 2. SECCIÓN PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* SERVICIOS MÁS SOLICITADOS */}
-        <div className="lg:col-span-2 bg-[#FFFFFF] p-6 rounded-2xl border border-[#D8C3B3] shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white/50 backdrop-blur-xl p-6 rounded-3xl border border-white/90 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <h2 className="font-serif text-lg font-bold text-[#32130E] flex items-center gap-2">
-                <Scissors className="w-5 h-5 text-[#572219]" />
+                <Scissors className="w-5 h-5 text-[#32130E]" />
                 Demanda de Servicios
               </h2>
-              <span className="text-xs bg-[#F5EBE1] text-[#7A5C55] px-3 py-1 rounded-full font-semibold">
+              <span className="text-[11px] bg-[#32130E] text-[#F5EBE1] px-3 py-1 rounded-full font-bold shadow-sm">
                 Más Solicitados
               </span>
             </div>
@@ -100,23 +93,25 @@ export default function AdminHomePage() {
             {stats?.serviciosPopulares &&
             stats.serviciosPopulares.length > 0 ? (
               stats.serviciosPopulares.map((item, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex justify-between text-xs font-semibold text-[#32130E]">
+                <div key={index} className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-bold text-[#32130E]">
                     <span>{item.servicio}</span>
-                    <span>{item.cantidad} citas</span>
+                    <span className="text-[#7A5C55]">
+                      {item.cantidad} citas
+                    </span>
                   </div>
-                  <div className="w-full bg-[#F5EBE1] rounded-full h-2.5 overflow-hidden">
+                  <div className="w-full bg-white/70 rounded-full h-2.5 overflow-hidden border border-white/60 p-0.5 shadow-inner">
                     <div
-                      className="bg-[#572219] h-2.5 rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-[#572219] to-[#32130E] h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${Math.min((item.cantidad / 20) * 100, 100)}%`,
                       }}
-                    ></div>
+                    />
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-[#8C7167]">
                 No hay servicios registrados aún.
               </p>
             )}
@@ -124,24 +119,24 @@ export default function AdminHomePage() {
         </div>
 
         {/* PRODUCTOS MÁS VENDIDOS */}
-        <div className="bg-[#FFFFFF] p-6 rounded-2xl border border-[#D8C3B3] shadow-sm">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-white/50 backdrop-blur-xl p-6 rounded-3xl border border-white/90 shadow-[0_8px_30px_rgba(50,19,14,0.05)]">
+          <div className="flex items-center justify-between mb-1">
             <h2 className="font-serif text-lg font-bold text-[#32130E] flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#572219]" />
+              <Package className="w-5 h-5 text-[#32130E]" />
               Productos Más Vendidos
             </h2>
           </div>
-          <p className="text-xs text-[#7A5C55] mb-4">
+          <p className="text-xs text-[#7A5C55] mb-5">
             Top artículos populares del POS.
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {stats?.productosMasVendidos &&
             stats.productosMasVendidos.length > 0 ? (
               stats.productosMasVendidos.map((prod) => (
                 <div
                   key={prod.id}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-[#F5EBE1]/50 transition-colors border border-[#D8C3B3]/40"
+                  className="flex items-center justify-between p-3 rounded-2xl bg-white/60 hover:bg-white/90 transition-all border border-white shadow-xs"
                 >
                   <div>
                     <p className="text-xs font-bold text-[#32130E]">
@@ -151,13 +146,13 @@ export default function AdminHomePage() {
                       {prod.ventas} unidades vendidas
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-[#2E6F40]">
+                  <span className="text-xs font-bold text-[#2E6F40] bg-white px-2.5 py-1 rounded-xl border border-white shadow-xs">
                     ${prod.precio.toFixed(2)}
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-[#8C7167]">
                 No hay productos vendidos aún.
               </p>
             )}

@@ -10,15 +10,15 @@ export default function CategoryFilter({
   onSelectCategory,
 }: CategoryFilterProps) {
   return (
-    <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
+    <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-hide">
       {categories.map((cat) => (
         <button
           key={cat}
           onClick={() => onSelectCategory(cat)}
-          className={`px-4 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
+          className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
             selectedCategory === cat
-              ? "bg-stone-900 text-white shadow-md"
-              : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-100"
+              ? "bg-[#32130E] text-[#F5EBE1] shadow-md"
+              : "bg-white/50 hover:bg-white/80 text-[#7A5C55] border border-white/90"
           }`}
         >
           {cat}

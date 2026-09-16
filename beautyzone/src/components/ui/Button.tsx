@@ -14,24 +14,22 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center font-medium rounded-xl transition-all disabled:opacity-50 cursor-pointer";
+    "inline-flex items-center justify-center font-bold rounded-2xl transition-all disabled:opacity-50 cursor-pointer active:scale-95";
 
   const variants = {
-    // Terracota / Café Profundo (#572219)
-    primary: "bg-[#572219] text-white hover:bg-[#421A13] shadow-sm",
-    // Rosa Terracota (#9D4B4C)
-    secondary: "bg-[#9D4B4C] text-white hover:bg-[#7A3328] shadow-sm",
-    // Borde Neutro (#D8C3B3) + Texto Principal (#32130E)
+    primary:
+      "bg-[#32130E] text-[#F5EBE1] hover:bg-[#572219] shadow-md hover:shadow-lg",
+    secondary:
+      "bg-[#9D4B4C] text-white hover:bg-[#7A3328] shadow-md hover:shadow-lg",
     outline:
-      "border border-[#D8C3B3] text-[#32130E] bg-[#FFFFFF] hover:bg-[#F5EBE1]",
-    // Ghost sobre hover crema
-    ghost: "text-[#32130E] hover:bg-[#F5EBE1]",
+      "border border-white/80 bg-white/60 text-[#32130E] hover:bg-white shadow-xs backdrop-blur-md",
+    ghost: "text-[#32130E] hover:bg-white/60 backdrop-blur-xs",
   };
 
   const sizes = {
     sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base",
+    md: "px-4.5 py-2.5 text-xs",
+    lg: "px-6 py-3 text-sm",
   };
 
   return (
