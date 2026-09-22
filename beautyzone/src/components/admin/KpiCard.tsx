@@ -16,7 +16,7 @@ export default function KpiCard({
   icon,
 }: KpiCardProps) {
   return (
-    <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/90 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex items-center justify-between transition-all duration-300 hover:bg-white/70 hover:shadow-[0_12px_40px_rgba(50,19,14,0.08)] hover:-translate-y-1">
+    <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/90 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex items-center justify-between transition-all duration-300 hover:bg-white/70 hover:shadow-[0_12px_40px_rgba(50,19,14,0.08)] hover:-translate-y-1 animate__animated animate__fadeIn">
       <div className="space-y-1">
         <p className="text-[11px] font-bold text-[#7A5C55] uppercase tracking-wider">
           {title}

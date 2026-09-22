@@ -10,7 +10,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  QrCode,
+  Printer,
+  X,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 import Button from "@/src/components/ui/Button";
 import { PerfilUsuario, ActualizarPerfilDTO } from "@/src/app/types/perfil";
@@ -24,6 +28,7 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [showGafeteModal, setShowGafeteModal] = useState<boolean>(false);
 
   const [formData, setFormData] = useState<ActualizarPerfilDTO>({
     nombre: "",
@@ -100,10 +105,44 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
     }
   };
 
+  const handlePrintGafete = () => {
+    window.print();
+  };
+
+  // SKELETON DE CARGA GLASSMORPHISM
   if (loading) {
     return (
-      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-8 flex justify-center items-center text-[#7A5C55] text-xs font-semibold shadow-[0_8px_30px_rgba(50,19,14,0.05)]">
-        Cargando datos del perfil...
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+        {/* Skeleton Resumen */}
+        <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex flex-col items-center">
+          <div className="w-24 h-24 rounded-full bg-[#32130E]/10 mb-4" />
+          <div className="h-5 bg-[#32130E]/10 rounded-xl w-3/4 mb-2" />
+          <div className="h-4 bg-[#32130E]/10 rounded-full w-1/3 mb-6" />
+          <div className="w-full border-t border-[#32130E]/10 my-4" />
+          <div className="w-full space-y-3">
+            <div className="h-4 bg-[#32130E]/10 rounded-lg w-5/6" />
+            <div className="h-4 bg-[#32130E]/10 rounded-lg w-2/3" />
+            <div className="h-4 bg-[#32130E]/10 rounded-lg w-3/4" />
+          </div>
+          <div className="w-full h-9 bg-[#32130E]/10 rounded-2xl mt-6" />
+        </div>
+
+        {/* Skeleton Formulario */}
+        <div className="lg:col-span-2 bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.05)] space-y-6">
+          <div className="space-y-2">
+            <div className="h-5 bg-[#32130E]/10 rounded-xl w-1/3" />
+            <div className="h-3 bg-[#32130E]/10 rounded-xl w-2/3" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="h-10 bg-[#32130E]/10 rounded-2xl" />
+            <div className="h-10 bg-[#32130E]/10 rounded-2xl" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="h-10 bg-[#32130E]/10 rounded-2xl" />
+            <div className="h-10 bg-[#32130E]/10 rounded-2xl" />
+          </div>
+          <div className="h-12 bg-[#32130E]/10 rounded-2xl" />
+        </div>
       </div>
     );
   }
@@ -120,7 +159,7 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
     `${perfil.nombre.charAt(0)}${perfil.apellido.charAt(0)}`.toUpperCase();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate__animated animate__fadeIn">
       {/* RESUMEN DE USUARIO */}
       <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex flex-col items-center text-center">
         <div className="w-24 h-24 rounded-full bg-[#32130E] text-[#F5EBE1] flex items-center justify-center text-2xl font-bold font-serif mb-4 shadow-md border-2 border-white">
@@ -162,6 +201,18 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
               </span>
             </div>
           )}
+        </div>
+
+        {/* BOTÓN GENERAR GAFETE */}
+        <div className="w-full pt-6 mt-6 border-t border-[#32130E]/10">
+          <Button
+            onClick={() => setShowGafeteModal(true)}
+            variant="outline"
+            className="w-full gap-2 border-white/90 bg-white/70 hover:bg-white text-[#32130E] shadow-2xs rounded-2xl text-xs font-bold"
+          >
+            <QrCode className="w-4 h-4 text-[#32130E]" />
+            <span>Generar Gafete Digital</span>
+          </Button>
         </div>
       </div>
 
@@ -303,6 +354,72 @@ export default function ProfileCard({ userId }: ProfileCardProps) {
           </div>
         </form>
       </div>
+
+      {/* MODAL DE GAFETE DIGITAL */}
+      {showGafeteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white/90 backdrop-blur-2xl border border-white rounded-3xl p-6 max-w-sm w-full shadow-[0_25px_50px_rgba(50,19,14,0.15)] space-y-6 relative">
+            <button
+              onClick={() => setShowGafeteModal(false)}
+              className="absolute top-4 right-4 p-1.5 text-[#7A5C55] hover:text-[#32130E] hover:bg-white rounded-xl transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* DISEÑO DEL GAFETE EN VIVO */}
+            <div
+              id="gafete-print"
+              className="bg-white border-2 border-[#32130E]/20 rounded-2xl p-6 text-center space-y-4 shadow-sm relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-3 bg-[#32130E]"></div>
+
+              <div className="pt-2">
+                <span className="text-[10px] font-extrabold text-[#7A5C55] uppercase tracking-widest">
+                  Gafete de Asistencia
+                </span>
+                <h3 className="text-xl font-bold font-serif text-[#32130E] leading-tight">
+                  {perfil.nombre} {perfil.apellido}
+                </h3>
+                <span className="inline-block mt-1 px-3 py-0.5 bg-[#32130E]/5 text-[#32130E] text-[10px] font-bold rounded-full border border-[#32130E]/10">
+                  {perfil.rol.nombre}
+                </span>
+              </div>
+
+              {/* CÓDIGO QR GENERADO */}
+              <div className="flex justify-center p-3 bg-white border border-[#32130E]/10 rounded-2xl shadow-2xs">
+                <QRCodeSVG
+                  value={String(perfil.id)}
+                  size={140}
+                  fgColor="#32130E"
+                  level="H"
+                />
+              </div>
+
+              <div className="text-[10px] font-mono text-[#7A5C55]">
+                ID: {String(perfil.id).padStart(6, "0")}
+              </div>
+            </div>
+
+            {/* ACCIONES DEL MODAL */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="w-full text-xs font-semibold border-white/80 bg-white/60 text-[#32130E]"
+                onClick={() => setShowGafeteModal(false)}
+              >
+                Cerrar
+              </Button>
+              <Button
+                onClick={handlePrintGafete}
+                className="w-full gap-2 text-xs font-semibold"
+              >
+                <Printer className="w-4 h-4" />
+                Imprimir
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

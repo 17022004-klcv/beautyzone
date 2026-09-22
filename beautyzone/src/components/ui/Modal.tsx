@@ -30,7 +30,7 @@ export default function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#32130E]/20 backdrop-blur-md p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#32130E]/20 backdrop-blur-md p-4 animate-in fade-in duration-200 animate__animated animate__fadeIn">
       <div
         className={`bg-white/80 backdrop-blur-2xl border border-white rounded-3xl w-full ${maxWidthClasses[maxWidth]} p-6 shadow-[0_16px_40px_rgba(50,19,14,0.12)] space-y-4`}
       >

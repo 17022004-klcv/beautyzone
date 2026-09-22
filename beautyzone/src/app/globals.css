@@ -81,3 +81,46 @@ h3,
 .animate-spin-slow {
   animation: spin-slow 20s linear infinite;
 }
+
+/* =========================================================
+   BEAUTYZONE - SIMPLEBAR
+========================================================= */
+
+.simplebar-track.simplebar-vertical {
+  width: 5px !important;
+  right: 2px;
+}
+
+.simplebar-scrollbar::before {
+  background-color: #8c7167 !important;
+  border-radius: 9999px;
+
+  left: 0;
+  right: 0;
+
+  opacity: 0.55 !important;
+
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.simplebar-scrollbar.simplebar-visible::before {
+  opacity: 0.75 !important;
+}
+
+.simplebar-scrollbar:hover::before {
+  background-color: #32130e !important;
+  opacity: 0.95 !important;
+}
+
+/* Ajuste para que el video de html5-qrcode ocupe el 100% del contenedor sin bordes sobrantes */
+#reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0.8rem;
+}
+#reader {
+  border: none !important;
+}

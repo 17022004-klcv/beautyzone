@@ -1,6 +1,7 @@
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+
 import {
   Clock,
   Plus,
@@ -11,6 +12,7 @@ import {
   Calendar,
   FilterX,
   UserCheck,
+  QrCode,
 } from "lucide-react";
 
 // Componentes UI Reutilizables
@@ -18,6 +20,7 @@ import Button from "@/src/components/ui/Button";
 import SearchBar from "@/src/components/ui/SearchBar";
 import SearchableSelect from "@/src/components/ui/SearchableSelect";
 import Modal from "@/src/components/ui/Modal";
+import Table from "@/src/components/ui/DataTable";
 
 // Tipos y Servicios
 import {
@@ -39,7 +42,7 @@ const OPCIONES_TIPO_REGISTRO: { label: string; value: TipoRegistro }[] = [
 export default function AsistenciasView() {
   const [asistencias, setAsistencias] = useState<AsistenciaItem[]>([]);
   const [empleados, setEmpleados] = useState<UsuarioItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -79,7 +82,6 @@ export default function AsistenciasView() {
       const res = await fetch("/api/usuarios");
       if (res.ok) {
         const data: UsuarioItem[] = await res.json();
-        // Filtramos solo usuarios activos
         setEmpleados(data.filter((u) => u.estado));
       }
     } catch (error) {
@@ -98,9 +100,7 @@ export default function AsistenciasView() {
   // Abrir Modal de Marcar Asistencia
   const handleOpenModal = () => {
     const ahora = new Date();
-    // Generar formato HH:mm por defecto
     const horaActual = ahora.toTimeString().split(" ")[0].substring(0, 5);
-    // Generar formato YYYY-MM-DD por defecto
     const fechaActual = ahora.toISOString().split("T")[0];
 
     setFormMarca({
@@ -192,13 +192,69 @@ export default function AsistenciasView() {
     setShowExportMenu(false);
   };
 
+  // Definición de columnas para DataTable
+  const columns = [
+    {
+      header: "Empleado",
+      accessorKey: (a: AsistenciaItem) => (
+        <span className="font-bold text-[#32130E]">
+          {a.empleado
+            ? `${a.empleado.nombre} ${a.empleado.apellido}`
+            : "Empleado Desconocido"}
+        </span>
+      ),
+    },
+    {
+      header: "Rol",
+      accessorKey: (a: AsistenciaItem) => (
+        <span className="bg-white/80 text-[#32130E] px-2.5 py-1 rounded-full text-[10px] font-bold border border-white shadow-2xs">
+          {a.empleado?.rol?.nombre || "Sin Rol"}
+        </span>
+      ),
+    },
+    {
+      header: "Fecha",
+      accessorKey: (a: AsistenciaItem) => (
+        <div className="flex items-center gap-1.5 text-[#7A5C55]">
+          <Calendar className="w-3.5 h-3.5 text-[#7A5C55]" />
+          {new Date(a.fecha).toLocaleDateString("es-SV", {
+            timeZone: "UTC",
+          })}
+        </div>
+      ),
+    },
+    {
+      header: "Hora",
+      accessorKey: (a: AsistenciaItem) => (
+        <span className="text-[#32130E] font-mono font-bold">{a.hora}</span>
+      ),
+    },
+    {
+      header: "Tipo de Marca",
+      accessorKey: (a: AsistenciaItem) => renderTipoBadge(a.tipoRegistro),
+    },
+    {
+      header: "Acciones",
+      accessorKey: (a: AsistenciaItem) => (
+        <div className="flex items-center justify-end">
+          <button
+            onClick={() => handleEliminar(a.id)}
+            className="p-1.5 text-[#B83A3A] hover:bg-[#B83A3A]/10 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer"
+            title="Eliminar registro"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6 p-6">
       {/* CABECERA SIN TARJETA */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-serif font-bold text-[#32130E] flex items-center gap-2.5">
-            <Clock className="w-6 h-6 text-[#32130E]" />
             Control de Asistencia
           </h1>
           <p className="text-xs font-medium text-[#7A5C55] mt-1">
@@ -208,6 +264,18 @@ export default function AsistenciasView() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* BOTÓN ABRIR PANTALLA DE MARCAJE (KIOSCO) */}
+          <Link href="/kiosco">
+            <Button
+              variant="outline"
+              size="md"
+              className="gap-2 text-xs font-semibold border-white/90 bg-white/60 hover:bg-white text-[#32130E] shadow-2xs"
+            >
+              <QrCode className="w-4 h-4 text-[#32130E]" />
+              <span>Abrir Marcaje</span>
+            </Button>
+          </Link>
+
           {/* BOTÓN EXPORTAR */}
           <div className="relative">
             <Button
@@ -224,14 +292,14 @@ export default function AsistenciasView() {
               <div className="absolute right-0 mt-2 w-44 bg-white/90 backdrop-blur-2xl border border-white rounded-2xl shadow-[0_12px_30px_rgba(50,19,14,0.08)] z-30 overflow-hidden p-1 space-y-0.5">
                 <button
                   onClick={() => handleExport("excel")}
-                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   Excel (.xlsx)
                 </button>
                 <button
                   onClick={() => handleExport("pdf")}
-                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2"
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#32130E] hover:bg-[#32130E]/5 rounded-xl transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <FileText className="w-4 h-4 text-rose-600" />
                   PDF (.pdf)
@@ -240,7 +308,7 @@ export default function AsistenciasView() {
             )}
           </div>
 
-          {/* BOTÓN REGISTRAR MARCA */}
+          {/* BOTÓN REGISTRAR MARCA MANUAL */}
           <Button
             size="md"
             className="gap-2 px-4 py-2 text-xs font-semibold shadow-sm"
@@ -253,7 +321,7 @@ export default function AsistenciasView() {
       </div>
 
       {/* BARRA DE FILTROS GLASSMORPHISM */}
-      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-4 shadow-[0_8px_30px_rgba(50,19,14,0.04)] flex flex-col md:flex-row items-center gap-3">
+      <div className="flex flex-col md:flex-row items-center gap-3">
         {/* Buscador de Nombre */}
         <div className="w-full md:w-72">
           <SearchBar
@@ -303,80 +371,17 @@ export default function AsistenciasView() {
         )}
       </div>
 
-      {/* TABLA DE ASISTENCIAS CON GLASSMORPHISM */}
-      <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.04)] min-h-[400px]">
+      {/* TABLA DE ASISTENCIAS CON GLASSMORPHISM / SKELETON */}
+      <div className=" min-h-[400px]">
         {loading ? (
-          <div className="flex justify-center items-center py-20 text-[#7A5C55] text-xs font-semibold">
-            Cargando registros de asistencia...
+          <div className="bg-white/50 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(50,19,14,0.04)] animate-pulse space-y-4">
+            <div className="h-8 bg-[#32130E]/5 rounded-xl w-full" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-white/60 rounded-xl w-full" />
+            ))}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#32130E]/10 text-xs font-bold text-[#32130E]">
-                  <th className="py-3 px-4">Empleado</th>
-                  <th className="py-3 px-4">Rol</th>
-                  <th className="py-3 px-4">Fecha</th>
-                  <th className="py-3 px-4">Hora</th>
-                  <th className="py-3 px-4">Tipo de Marca</th>
-                  <th className="py-3 px-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#32130E]/5">
-                {asistencias.map((a) => (
-                  <tr
-                    key={a.id}
-                    className="hover:bg-white/60 transition-colors text-xs font-medium"
-                  >
-                    <td className="py-3.5 px-4 font-bold text-[#32130E]">
-                      {a.empleado
-                        ? `${a.empleado.nombre} ${a.empleado.apellido}`
-                        : "Empleado Desconocido"}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="bg-white/80 text-[#32130E] px-2.5 py-1 rounded-full text-[10px] font-bold border border-white shadow-2xs">
-                        {a.empleado?.rol?.nombre || "Sin Rol"}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-[#7A5C55]">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#7A5C55]" />
-                        {new Date(a.fecha).toLocaleDateString("es-SV", {
-                          timeZone: "UTC",
-                        })}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-[#32130E] font-mono font-bold">
-                      {a.hora}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      {renderTipoBadge(a.tipoRegistro)}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => handleEliminar(a.id)}
-                        className="p-1.5 text-[#B83A3A] hover:bg-[#B83A3A]/10 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs"
-                        title="Eliminar registro"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {asistencias.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center py-12 text-xs text-[#7A5C55] font-semibold"
-                    >
-                      No se encontraron registros de asistencia con los filtros
-                      aplicados.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Table columns={columns} data={asistencias} />
         )}
       </div>
 

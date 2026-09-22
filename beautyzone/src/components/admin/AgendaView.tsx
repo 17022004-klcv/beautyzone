@@ -79,7 +79,7 @@ export default function AgendaView() {
   const hoy = new Date();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate__animated animate__fadeIn">
       {/* BOTÓN SUPERIOR */}
       <div className="flex justify-end">
         <Button

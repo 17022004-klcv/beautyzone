@@ -6,9 +6,9 @@ export const metadata = {
 
 export default function ServiciosPage() {
   return (
-    <main className="p-6 max-w-7xl mx-auto space-y-6">
+    <main className="p-6 max-w-7xl mx-auto space-y-6 animate__animated animate__fadeIn">
       {/* ENCABEZADO DE LA PÁGINA */}
-      <div className=" backdrop-blur-xl rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className=" backdrop-blur-xl rounded-3xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#32130E]">
             Catálogo de Servicios

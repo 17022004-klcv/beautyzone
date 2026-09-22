@@ -5,7 +5,7 @@ interface PageTitleProps {
 
 export default function PageTitle({ title, subtitle }: PageTitleProps) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 animate__animated animate__fadeIn">
       <h1 className="font-serif text-3xl font-bold text-[#32130E] capitalize tracking-tight">
         {title}
       </h1>

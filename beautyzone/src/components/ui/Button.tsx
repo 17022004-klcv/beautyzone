@@ -14,7 +14,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center font-bold rounded-2xl transition-all disabled:opacity-50 cursor-pointer active:scale-95";
+    "inline-flex items-center justify-center font-bold rounded-2xl transition-all disabled:opacity-50 cursor-pointer active:scale-95 animate__animated animate__fadeIn";
 
   const variants = {
     primary:

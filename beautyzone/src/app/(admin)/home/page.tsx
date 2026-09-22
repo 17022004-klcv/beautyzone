@@ -29,8 +29,53 @@ export default function AdminHomePage() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-[#7A5C55] font-medium">
-        Cargando estadísticas del panel...
+      <div className="min-h-screen flex items-center justify-center bg-[#F0ECEA]">
+        <div className="flex flex-col items-center justify-center text-center">
+          {/* Contenedor de la Tijera */}
+          <div className="relative mb-6">
+            <div className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-xl border border-white/90 shadow-[0_8px_30px_rgba(50,19,14,0.08)] flex items-center justify-center overflow-hidden">
+              {/* Tijera con efecto de corte (abrir/cerrar) */}
+              <Scissors className="w-10 h-10 text-[#32130E] animate-[snip_0.8s_ease-in-out_infinite]" />
+
+              {/* Línea de "corte" o hilo decorativo que se encoge */}
+              <div className="absolute top-1/2 left-0 w-full h-[1px] bg-dashed border-b border-dashed border-[#C89B8C]/60 animate-[pulse_1s_infinite]" />
+            </div>
+
+            {/* Círculo decorativo */}
+            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#C89B8C] animate-ping" />
+          </div>
+
+          {/* Texto */}
+          <h2 className="font-serif text-2xl font-bold text-[#32130E]">
+            Preparando tu espacio...
+          </h2>
+
+          <p className="mt-2 text-sm text-[#7A5C55]">
+            Un momento, estamos cargando el panel.
+          </p>
+
+          {/* Indicador de puntos */}
+          <div className="mt-6 flex gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#32130E] animate-bounce [animation-delay:0ms]" />
+            <span className="w-2 h-2 rounded-full bg-[#32130E] animate-bounce [animation-delay:150ms]" />
+            <span className="w-2 h-2 rounded-full bg-[#32130E] animate-bounce [animation-delay:300ms]" />
+          </div>
+
+          {/* Estilos inyectados para la animación de tijera (snip) */}
+          <style>{`
+          @keyframes snip {
+            0%, 100% {
+              transform: rotate(0deg) scale(1);
+            }
+            50% {
+              transform: rotate(-18deg) scale(1.05);
+            }
+            75% {
+              transform: rotate(12deg) scale(0.98);
+            }
+          }
+        `}</style>
+        </div>
       </div>
     );
   }
@@ -71,7 +116,7 @@ export default function AdminHomePage() {
       </div>
 
       {/* 2. SECCIÓN PRINCIPAL */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate__animated animate__fadeIn">
         {/* SERVICIOS MÁS SOLICITADOS */}
         <div className="lg:col-span-2 bg-white/50 backdrop-blur-xl p-6 rounded-3xl border border-white/90 shadow-[0_8px_30px_rgba(50,19,14,0.05)] flex flex-col justify-between">
           <div>
