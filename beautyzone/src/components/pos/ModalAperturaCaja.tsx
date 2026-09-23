@@ -1,14 +1,13 @@
 "use client";
 import { useState } from "react";
-import { CajaService } from "@/src/app/services/caja.service";
 
 interface ModalAperturaProps {
-  idcajero: number;
-  onAperturaExitosa: () => void;
+  isOpen: boolean;
+  onAperturaExitosa: (cajaData?: any) => void;
 }
 
 export default function ModalAperturaCaja({
-  idcajero,
+  isOpen,
   onAperturaExitosa,
 }: ModalAperturaProps) {
   const [nombreCaja, setNombreCaja] = useState("Caja Principal");
@@ -17,6 +16,8 @@ export default function ModalAperturaCaja({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  if (!isOpen) return null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -24,24 +25,34 @@ export default function ModalAperturaCaja({
     const montoNum = parseFloat(montoApertura);
 
     if (!passwordPin.trim()) {
-      setError("La contraseña/PIN es obligatoria");
+      setError("El PIN de seguridad es obligatorio");
       return;
     }
 
     if (isNaN(montoNum) || montoNum <= 0) {
-      setError("El monto de apertura debe ser un valor numérico mayor a 0");
+      setError("El monto de apertura debe ser mayor a 0");
       return;
     }
 
     try {
       setLoading(true);
-      await CajaService.abrirCaja({
-        idcajero,
-        nombreCaja,
-        passwordPin,
-        montoApertura: montoNum,
+      const res = await fetch("/api/caja", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombreCaja,
+          passwordPin,
+          montoApertura: montoNum,
+        }),
       });
-      onAperturaExitosa();
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Error al abrir la caja");
+      }
+
+      onAperturaExitosa(data.caja);
     } catch (err: any) {
       setError(err.message || "Error al abrir la caja");
     } finally {
@@ -55,7 +66,7 @@ export default function ModalAperturaCaja({
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Apertura de Caja</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Ingresa los datos para iniciar tu turno de ventas
+            Ingresa tu PIN de seguridad para iniciar tu turno
           </p>
         </div>
 
@@ -68,28 +79,30 @@ export default function ModalAperturaCaja({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Nombre o Identificador de Caja
+              Nombre de la Caja
             </label>
             <input
               type="text"
               value={nombreCaja}
               onChange={(e) => setNombreCaja(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black outline-none"
-              placeholder="Ej: Caja Principal, Caja 1"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black outline-none text-sm"
+              placeholder="Ej: Caja Principal"
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Contraseña / PIN de Caja
+              PIN Personal de Recepcionista
             </label>
             <input
               type="password"
+              maxLength={6}
               value={passwordPin}
               onChange={(e) => setPasswordPin(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black outline-none"
-              placeholder="****"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black outline-none font-mono tracking-widest text-lg"
+              placeholder="••••"
+              autoFocus
               required
             />
           </div>
@@ -115,7 +128,7 @@ export default function ModalAperturaCaja({
             disabled={loading}
             className="w-full py-3 bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 mt-2"
           >
-            {loading ? "Abriendo caja..." : "Abrir Turno de Caja"}
+            {loading ? "Verificando..." : "Abrir Turno de Caja"}
           </button>
         </form>
       </div>

@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/src/lib/db";
 
-// GET: Obtener la caja activa del cajero
-export async function GET(request: Request) {
+// GET: Obtener la caja activa del sistema
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const idcajero = searchParams.get("idcajero");
-
-    if (!idcajero) {
-      return NextResponse.json(
-        { error: "El ID del cajero es requerido" },
-        { status: 400 },
-      );
-    }
-
     const cajaActiva = await db.cajaTurno.findFirst({
-      where: {},
+      where: { estado: "ABIERTA" },
       include: {
+        cajero: {
+          select: { id: true, nombre: true, apellido: true },
+        },
         ventas: {
           where: { estado: "PAGADO" },
           select: {
@@ -57,7 +50,7 @@ export async function GET(request: Request) {
           transferencia: totalTransferenciaVentas,
           totalAcumuladoVentas:
             totalEfectivoVentas + totalTarjetaVentas + totalTransferenciaVentas,
-          montoEsperadoEnCaja, // Apertura + Efectivo cobrado
+          montoEsperadoEnCaja,
         },
       },
     });
@@ -66,52 +59,77 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Abrir un nuevo turno de caja
+// POST: Abrir un nuevo turno de caja autenticando mediante PIN
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { idcajero, nombreCaja, passwordPin, montoApertura } = body;
+    const { passwordPin, montoApertura, nombreCaja } = body;
 
-    if (!idcajero || !passwordPin || montoApertura === undefined) {
+    if (!passwordPin || montoApertura === undefined) {
       return NextResponse.json(
-        { error: "Faltan datos obligatorios para abrir caja" },
+        { error: "El PIN de seguridad y el monto de apertura son requeridos" },
         { status: 400 },
       );
     }
 
-    if (Number(montoApertura) <= 0) {
+    const montoNum = Number(montoApertura);
+    if (isNaN(montoNum) || montoNum <= 0) {
       return NextResponse.json(
         { error: "El monto de apertura debe ser mayor a 0" },
         { status: 400 },
       );
     }
 
-    // Verificar si ya hay una caja abierta para este usuario
-    const existente = await db.cajaTurno.findFirst({
+    // 1. Buscar al cajero/recepcionista por su PIN único en la base de datos
+    const usuario = await db.usuario.findFirst({
       where: {
-        idcajero: Number(idcajero),
-        estado: "ABIERTA",
+        pinCaja: String(passwordPin).trim(),
+        estado: true,
       },
+    });
+
+    if (!usuario) {
+      return NextResponse.json(
+        { error: "PIN de seguridad incorrecto o usuario inactivo" },
+        { status: 401 },
+      );
+    }
+
+    // 2. Verificar si ya existe una caja ABIERTA actualmente en el negocio
+    const existente = await db.cajaTurno.findFirst({
+      where: { estado: "ABIERTA" },
     });
 
     if (existente) {
       return NextResponse.json(
-        { error: "Ya existe un turno de caja abierto para este usuario" },
+        { error: "Ya existe un turno de caja abierto actualmente" },
         { status: 400 },
       );
     }
 
+    // 3. Crear el turno de caja asignado automáticamente al usuario encontrado
     const nuevaCaja = await db.cajaTurno.create({
       data: {
-        idcajero: Number(idcajero),
+        idcajero: usuario.id,
         nombreCaja: nombreCaja || "Caja Principal",
-        passwordPin,
-        montoApertura: Number(montoApertura),
+        passwordPin: String(passwordPin).trim(),
+        montoApertura: montoNum,
         estado: "ABIERTA",
+      },
+      include: {
+        cajero: {
+          select: { id: true, nombre: true, apellido: true },
+        },
       },
     });
 
-    return NextResponse.json(nuevaCaja, { status: 201 });
+    return NextResponse.json(
+      {
+        message: `Caja abierta correctamente por ${usuario.nombre} ${usuario.apellido}`,
+        caja: nuevaCaja,
+      },
+      { status: 201 },
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

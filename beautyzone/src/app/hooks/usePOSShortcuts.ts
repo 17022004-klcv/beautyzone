@@ -6,6 +6,7 @@ interface POSShortcuts {
   onCliente?: () => void;
   onCitas?: () => void;
   onFacturar?: () => void;
+  onVaciar?: () => void;
   onCierre?: () => void;
 }
 
@@ -14,6 +15,7 @@ export function usePOSShortcuts({
   onCliente,
   onCitas,
   onFacturar,
+  onVaciar,
   onCierre,
 }: POSShortcuts) {
   useEffect(() => {
@@ -35,6 +37,10 @@ export function usePOSShortcuts({
           e.preventDefault();
           onFacturar?.();
           break;
+        case "F8":
+          e.preventDefault(); // Previene la pausa de depuración del navegador
+          onVaciar?.();
+          break;
         case "F12":
           e.preventDefault();
           onCierre?.();
@@ -46,5 +52,5 @@ export function usePOSShortcuts({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onBuscar, onCliente, onCitas, onFacturar, onCierre]);
+  }, [onBuscar, onCliente, onCitas, onFacturar, onVaciar, onCierre]);
 }
