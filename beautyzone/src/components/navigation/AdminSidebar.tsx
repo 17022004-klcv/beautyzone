@@ -19,6 +19,8 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
+  ScrollText,
+  DatabaseBackup,
 } from "lucide-react";
 
 const menuSections = [
@@ -79,6 +81,16 @@ const menuSections = [
         name: "Asistencias",
         href: "/attendance",
         icon: Clock,
+      },
+      {
+        name: "Auditoría",
+        href: "/auditoria",
+        icon: ScrollText,
+      },
+      {
+        name: "Respaldos",
+        href: "/backups",
+        icon: DatabaseBackup,
       },
     ],
   },

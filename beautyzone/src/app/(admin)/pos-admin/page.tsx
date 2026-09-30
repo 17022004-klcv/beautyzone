@@ -13,23 +13,36 @@ import {
   Plus,
   Minus,
   RotateCcw,
+  Banknote,
 } from "lucide-react";
 
 import POSActionButton from "@/src/components/pos/POSActionButton";
 import CategoryFilter from "@/src/components/ui/CategoryFilter";
+import DialogoPos from "@/src/components/ui/DialogoPos";
 import { usePOSShortcuts } from "@/src/app/hooks/usePOSShortcuts";
 import { CajaService } from "@/src/app/services/caja.service";
 import { POSService } from "@/src/app/services/pos.service";
 import ModalAperturaCaja from "@/src/components/pos/ModalAperturaCaja";
+import type { CajaActiva } from "@/src/app/types/caja";
 import {
   ItemOrden,
   ProductoServicioItem,
   Cliente,
   CitaPendiente,
 } from "@/src/app/types/pos";
+import type { LineaDetalle, TipoDialogo } from "@/src/components/ui/DialogoPos";
+
+interface DialogoActivo {
+  tipo: TipoDialogo;
+  titulo: string;
+  mensaje?: string;
+  detalle?: LineaDetalle[];
+  textoConfirmar?: string;
+  accion?: () => void;
+}
 
 export default function POSPage() {
-  const [cajaActiva, setCajaActiva] = useState<any>(null);
+  const [cajaActiva, setCajaActiva] = useState<CajaActiva | null>(null);
   const [activePanel, setActivePanel] = useState<
     "CLIENTES" | "CITAS" | "CIERRE" | null
   >(null);
@@ -51,6 +64,17 @@ export default function POSPage() {
   const [clientesLista, setClientesLista] = useState<Cliente[]>([]);
   const [citasPendientes, setCitasPendientes] = useState<CitaPendiente[]>([]);
 
+  // Cierre de turno: solo totales y PIN. El conteo de billetes vive en
+  // /arqueo, así que el POS no pide denom en ninguna parte.
+  const [pinCierre, setPinCierre] = useState("");
+  const [cerrandoTurno, setCerrandoTurno] = useState(false);
+  const [errorCierre, setErrorCierre] = useState<string | null>(null);
+
+  // Diálogos propios en vez de alert()/confirm() del navegador
+  const [dialogo, setDialogo] = useState<DialogoActivo | null>(null);
+
+  const cerrarDialogo = () => setDialogo(null);
+
   const categorias = [
     "TODOS",
     "SERVICIOS",
@@ -62,8 +86,7 @@ export default function POSPage() {
 
   const checkCaja = async () => {
     try {
-      const res = await fetch("/api/caja");
-      const data = await res.json();
+      const data = await CajaService.obtenerEstadoCaja();
 
       if (data.activa && data.caja) {
         setCajaActiva(data.caja);
@@ -103,14 +126,26 @@ export default function POSPage() {
     cargarDatos();
   }, []);
 
+  const vaciarOrden = () => {
+    setCart([]);
+    setCliente(null);
+    setCitaActivaId(null);
+    setEfectivoRecibido("");
+  };
+
   const handleLimpiarOrden = () => {
     if (cart.length === 0 && !cliente) return;
-    if (confirm("¿Deseas vaciar la orden actual?")) {
-      setCart([]);
-      setCliente(null);
-      setCitaActivaId(null);
-      setEfectivoRecibido("");
-    }
+    setDialogo({
+      tipo: "confirmar",
+      titulo: "Vaciar la orden",
+      mensaje:
+        "Se quitarán todos los productos y servicios de esta orden. Esta acción no se puede deshacer.",
+      textoConfirmar: "Sí, vaciar",
+      accion: () => {
+        vaciarOrden();
+        setDialogo(null);
+      },
+    });
   };
 
   usePOSShortcuts({
@@ -121,8 +156,7 @@ export default function POSPage() {
       setActivePanel((prev) => (prev === "CITAS" ? null : "CITAS")),
     onFacturar: () => handleFinalizarVenta(),
     onVaciar: () => handleLimpiarOrden(),
-    onCierre: () =>
-      setActivePanel((prev) => (prev === "CIERRE" ? null : "CIERRE")),
+    onCierre: abrirPanelCierre,
   });
 
   const agregarAlCarrito = (item: ProductoServicioItem) => {
@@ -205,14 +239,51 @@ export default function POSPage() {
   };
 
   const handleFinalizarVenta = async () => {
-    if (cart.length === 0) return alert("La orden está vacía.");
-    if (metodoPago === "EFECTIVO" && numEfectivo < total)
-      return alert("Monto recibido es menor al total.");
+    if (!cajaActiva) {
+      setDialogo({
+        tipo: "error",
+        titulo: "No hay caja abierta",
+        mensaje: "Abre tu turno de caja antes de registrar una venta.",
+      });
+      return;
+    }
+
+    if (cart.length === 0) {
+      setDialogo({
+        tipo: "error",
+        titulo: "Orden vacía",
+        mensaje: "Agrega al menos un producto o servicio antes de cobrar.",
+      });
+      return;
+    }
+
+    if (metodoPago === "EFECTIVO" && numEfectivo < total) {
+      const faltan = total - numEfectivo;
+      setDialogo({
+        tipo: "error",
+        titulo: "Saldo insuficiente",
+        mensaje: `El efectivo recibido no cubre el total de la orden. Faltan $${faltan.toFixed(2)}.`,
+        detalle: [
+          { etiqueta: "Total a cobrar", valor: `$${total.toFixed(2)}` },
+          {
+            etiqueta: "Efectivo recibido",
+            valor: `$${numEfectivo.toFixed(2)}`,
+          },
+          {
+            etiqueta: "Falta",
+            valor: `-$${faltan.toFixed(2)}`,
+            destacado: true,
+          },
+        ],
+      });
+      return;
+    }
 
     try {
       await POSService.registrarVenta({
-        cajaTurnoId: cajaActiva?.id,
-        idempleadoCaja: 1, // ID del usuario cajero en sesión
+        cajaTurnoId: cajaActiva.id,
+        // El cajero es quien abrió el turno, no un id fijo.
+        idempleadoCaja: cajaActiva.cajero.id,
         clienteId: cliente?.id,
         citaId: citaActivaId || undefined,
         metodoPago,
@@ -227,13 +298,38 @@ export default function POSPage() {
         })),
       });
 
-      alert(`Venta guardada con éxito por $${total.toFixed(2)}`);
+      const detalle: LineaDetalle[] = [
+        { etiqueta: "Total", valor: `$${total.toFixed(2)}` },
+        { etiqueta: "Método de pago", valor: metodoPago },
+      ];
+
+      // El cambio solo aplica cuando el cliente paga en efectivo.
+      if (metodoPago === "EFECTIVO" && numEfectivo > total) {
+        detalle.push({
+          etiqueta: "Cambio",
+          valor: `$${cambio.toFixed(2)}`,
+          destacado: true,
+        });
+      }
+
+      setDialogo({
+        tipo: "exito",
+        titulo: "¡Muchas gracias por tu compra!",
+        mensaje: "Tu pago se registró correctamente.",
+        detalle,
+      });
+
       setCart([]);
       setCliente(null);
       setCitaActivaId(null);
       setEfectivoRecibido("");
+      checkCaja(); // Refresca los totales del turno para el panel de cierre
     } catch (err: any) {
-      alert(err.message || "Error al procesar la venta");
+      setDialogo({
+        tipo: "error",
+        titulo: "No se pudo registrar la venta",
+        mensaje: err.message || "Ocurrió un error al procesar la venta.",
+      });
     }
   };
 
@@ -246,8 +342,81 @@ export default function POSPage() {
     return coincideBusqueda && coincideCategoria;
   });
 
+  // Desglose del turno activo para el panel de cierre. GET /api/caja ya
+  // devuelve estos montos como number, no como Decimal.
+  const resumenCierre = {
+    apertura: cajaActiva?.montoApertura ?? 0,
+    efectivo: cajaActiva?.resumenVentas.efectivo ?? 0,
+    tarjeta: cajaActiva?.resumenVentas.tarjeta ?? 0,
+    transferencia: cajaActiva?.resumenVentas.transferencia ?? 0,
+    totalVendido: cajaActiva?.resumenVentas.totalAcumuladoVentas ?? 0,
+  };
+
+  // Lo que debería haber en el cajón: apertura + ventas en efectivo.
+  const montoEsperadoCierre = Number(
+    (resumenCierre.apertura + resumenCierre.efectivo).toFixed(2),
+  );
+
+  function abrirPanelCierre() {
+    setPinCierre("");
+    setErrorCierre(null);
+    setActivePanel((prev) => (prev === "CIERRE" ? null : "CIERRE"));
+  }
+
+  const handleCerrarTurno = async () => {
+    if (!cajaActiva) return;
+    if (!pinCierre.trim()) {
+      setErrorCierre("Ingresa el PIN de caja para confirmar el cierre.");
+      return;
+    }
+
+    try {
+      setCerrandoTurno(true);
+      setErrorCierre(null);
+
+      // Solo se envía el PIN: el conteo de billetes se hace en /arqueo.
+      const resumen = await CajaService.cerrarCaja({
+        idcajaTurno: cajaActiva.id,
+        passwordPin: pinCierre.trim(),
+      });
+
+      setPinCierre("");
+      setActivePanel(null);
+      checkCaja();
+
+      setDialogo({
+        tipo: "exito",
+        titulo: "Turno de caja cerrado",
+        mensaje:
+          "El conteo de billetes y monedas queda pendiente en la pantalla de Arqueo.",
+        detalle: [
+          { etiqueta: "Apertura", valor: `$${resumen.montoApertura.toFixed(2)}` },
+          { etiqueta: "Efectivo", valor: `$${resumen.ventasEfectivo.toFixed(2)}` },
+          { etiqueta: "Tarjeta", valor: `$${resumen.ventasTarjeta.toFixed(2)}` },
+          {
+            etiqueta: "Transferencia",
+            valor: `$${resumen.ventasTransferencia.toFixed(2)}`,
+          },
+          {
+            etiqueta: "Total vendido",
+            valor: `$${resumen.totalVendido.toFixed(2)}`,
+            destacado: true,
+          },
+          {
+            etiqueta: "Esperado en caja",
+            valor: `$${resumen.montoEsperado.toFixed(2)}`,
+          },
+        ],
+      });
+    } catch (err: any) {
+      setErrorCierre(err.message || "Error al cerrar el turno de caja.");
+    } finally {
+      setCerrandoTurno(false);
+    }
+  };
+
   return (
-    <div className="h-screen w-full flex flex-col bg-[#F0ECEA] font-sans select-none overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-[#F6F2EF] font-sans select-none overflow-hidden">
       <ModalAperturaCaja
         isOpen={modalAperturaOpen}
         onAperturaExitosa={() => {
@@ -299,9 +468,7 @@ export default function POSPage() {
             label="Cierre X"
             icon={Lock}
             variant="danger"
-            onClick={() =>
-              setActivePanel(activePanel === "CIERRE" ? null : "CIERRE")
-            }
+            onClick={abrirPanelCierre}
           />
         </div>
       </div>
@@ -589,36 +756,97 @@ export default function POSPage() {
               )}
 
               {activePanel === "CIERRE" && (
-                <div className="space-y-2 font-mono text-xs bg-white p-2 border border-[#EADBCF] rounded-lg shadow-sm">
-                  <div className="border-b border-[#F5EBE1] pb-1.5">
-                    <span className="text-[9px] text-[#7A5C55] block uppercase">
-                      Monto Apertura
-                    </span>
-                    <strong className="text-xs text-[#32130E]">
-                      ${Number(cajaActiva?.montoApertura || 0).toFixed(2)}
-                    </strong>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const pin = prompt(
-                          "Ingrese la contraseña o PIN de caja para confirmar el cierre:",
-                        );
-                        if (!pin) return; // Si cancela o deja vacío, detiene la ejecución
+                <div className="space-y-3 bg-white p-3 border border-[#EADBCF] rounded-lg shadow-sm font-mono">
+                  {errorCierre && (
+                    <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-semibold">
+                      {errorCierre}
+                    </div>
+                  )}
 
-                        await POSService.realizarCierreX(
-                          cajaActiva?.id || 1,
-                          pin,
-                        );
-                        alert("Caja Cerrada Correctamente.");
-                        setActivePanel(null);
-                        checkCaja();
-                      } catch (e: any) {
-                        alert(e.message);
-                      }
-                    }}
+                  {/* RESUMEN REGISTRADO POR EL SISTEMA */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="col-span-2 p-2 bg-[#EADBCF]/60 border border-[#D8C3B3] rounded-lg">
+                      <span className="text-[9px] text-[#7A5C55] block uppercase tracking-wider">
+                        Monto de Apertura
+                      </span>
+                      <strong className="text-sm text-[#32130E]">
+                        ${resumenCierre.apertura.toFixed(2)}
+                      </strong>
+                    </div>
+                    <div className="p-2 border border-[#F5EBE1] rounded-lg">
+                      <span className="text-[9px] text-[#7A5C55] block uppercase tracking-wider">
+                        Efectivo
+                      </span>
+                      <strong className="text-xs text-[#2E6F40]">
+                        ${resumenCierre.efectivo.toFixed(2)}
+                      </strong>
+                    </div>
+                    <div className="p-2 border border-[#F5EBE1] rounded-lg">
+                      <span className="text-[9px] text-[#7A5C55] block uppercase tracking-wider">
+                        Tarjeta
+                      </span>
+                      <strong className="text-xs text-[#4A6D8C]">
+                        ${resumenCierre.tarjeta.toFixed(2)}
+                      </strong>
+                    </div>
+                    <div className="col-span-2 p-2 border border-[#F5EBE1] rounded-lg">
+                      <span className="text-[9px] text-[#7A5C55] block uppercase tracking-wider">
+                        Transferencia
+                      </span>
+                      <strong className="text-xs text-[#9D4B4C]">
+                        ${resumenCierre.transferencia.toFixed(2)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center border-t-2 border-[#32130E] pt-2">
+                    <span className="text-[10px] text-[#32130E] font-bold uppercase tracking-wider">
+                      Total Vendido
+                    </span>
+                    <span className="text-base font-bold text-[#32130E]">
+                      ${resumenCierre.totalVendido.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* AVISO: el conteo de billetes se hace en /arqueo */}
+                  <div className="flex items-start gap-2 rounded-lg border border-[#EADBCF] bg-[#EADBCF]/40 p-2">
+                    <Banknote size={14} className="mt-0.5 shrink-0 text-[#7A5C55]" />
+                    <p className="text-[10px] leading-snug text-[#7A5C55]">
+                      El conteo de billetes y monedas se registra en la
+                      pantalla de Arqueo, después de cerrar el turno.
+                    </p>
+                  </div>
+
+                  {/* ESPERADO EN CAJA */}
+                  <div className="flex items-center justify-between border-t-2 border-[#32130E] pt-2">
+                    <span className="text-[10px] text-[#32130E] font-bold uppercase tracking-wider">
+                      Esperado en caja
+                    </span>
+                    <span className="text-base font-bold text-[#32130E]">
+                      ${montoEsperadoCierre.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-[#E6D9D0] pt-2">
+                    <label className="block text-[9px] text-[#7A5C55] uppercase tracking-wider font-bold mb-1">
+                      PIN de caja
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={6}
+                      value={pinCierre}
+                      onChange={(e) => setPinCierre(e.target.value.replace(/\D/g, ""))}
+                      placeholder="••••••"
+                      className="w-full px-2 py-1.5 text-sm font-mono tracking-widest text-[#32130E] bg-white border border-[#E6D9D0] rounded focus:outline-none focus:ring-1 focus:ring-[#32130E]"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleCerrarTurno}
+                    disabled={cerrandoTurno || !cajaActiva}
+                    className="w-full py-2 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-[10px] font-bold rounded uppercase tracking-wider transition"
                   >
-                    Confirmar Cierre de Caja
+                    {cerrandoTurno ? "Cerrando..." : "Confirmar Cierre de Caja"}
                   </button>
                 </div>
               )}
@@ -626,6 +854,18 @@ export default function POSPage() {
           </div>
         )}
       </div>
+
+      {/* Diálogos propios: reemplazan los alert()/confirm() del navegador */}
+      <DialogoPos
+        abierto={dialogo !== null}
+        tipo={dialogo?.tipo ?? "exito"}
+        titulo={dialogo?.titulo ?? ""}
+        mensaje={dialogo?.mensaje}
+        detalle={dialogo?.detalle}
+        textoConfirmar={dialogo?.textoConfirmar}
+        onConfirmar={dialogo?.accion}
+        onCerrar={cerrarDialogo}
+      />
     </div>
   );
 }

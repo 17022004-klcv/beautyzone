@@ -91,27 +91,4 @@ export const POSService = {
     }
     return res.json();
   },
-
-  // 5. Cierre de Turno de Caja usando tu ruta real: /api/caja/cierre
-  async realizarCierreX(
-    idcajaTurno: number,
-    passwordPin: string,
-    montoCierreReal?: number,
-  ) {
-    const res = await fetch(`${API_BASE}/caja/cierre`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        idcajaTurno,
-        passwordPin,
-        montoCierreReal,
-      }),
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Error al realizar el cierre de caja");
-    }
-    return res.json();
-  },
 };

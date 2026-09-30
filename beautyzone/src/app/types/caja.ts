@@ -10,40 +10,54 @@ export interface CajaTurno {
   fechaApertura: string;
   fechaCierre?: string | null;
   cajero?: {
+    id: number;
     nombre: string;
     apellido: string;
   };
 }
 
+export interface ResumenVentas {
+  efectivo: number;
+  tarjeta: number;
+  transferencia: number;
+  totalAcumuladoVentas: number;
+  montoEsperadoEnCaja: number;
+}
+
+export interface CajaActiva extends CajaTurno {
+  cajero: { id: number; nombre: string; apellido: string };
+  resumenVentas: ResumenVentas;
+}
+
+export interface EstadoCaja {
+  activa: boolean;
+  caja: CajaActiva | null;
+}
+
 export interface AperturaCajaDTO {
-  idcajero: number;
   nombreCaja: string;
   passwordPin: string;
   montoApertura: number;
 }
 
-export interface DesgloseDenominaciones {
-  // Billetes
-  b100: number;
-  b50: number;
-  b20: number;
-  b10: number;
-  b5: number;
-  b1: number;
-  // Monedas
-  m100: number; // $1.00
-  m025: number; // $0.25
-  m010: number; // $0.10
-  m005: number; // $0.05
-  m001: number; // $0.01
-  // Otros Métodos
-  totalTarjeta: number;
-  totalTransferencia: number;
-}
-
+/**
+ * El POS cierra el turno solo con el PIN. El conteo de billetes y monedas se
+ * completa después en /arqueo, así que no viaja nada de eso en el cierre.
+ */
 export interface CierreCajaDTO {
   idcajaTurno: number;
-  montoCierreReal: number; // El valor ingresado en el textfield principal
   passwordPin: string;
-  denominaciones: DesgloseDenominaciones;
+}
+
+export interface ResumenCierre {
+  montoApertura: number;
+  ventasEfectivo: number;
+  ventasTarjeta: number;
+  ventasTransferencia: number;
+  totalVendido: number;
+  montoEsperado: number;
+  totalTarjeta: number;
+  totalTransferencia: number;
+  /** El conteo físico sigue pendiente hasta pasar por /arqueo. */
+  estadoConteo: "PENDIENTE" | "REALIZADO";
 }

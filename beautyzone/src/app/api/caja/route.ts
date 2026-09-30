@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/src/lib/db";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 // GET: Obtener la caja activa del sistema
 export async function GET() {
@@ -121,6 +125,25 @@ export async function POST(request: Request) {
           select: { id: true, nombre: true, apellido: true },
         },
       },
+    });
+
+    await BitacoraService.registrar({
+      accion: "ABRIO_CAJA",
+      entidad: "CajaTurno",
+      entidadId: nuevaCaja.id,
+      descripcion: `${usuario.nombre} ${usuario.apellido} abrió el turno de caja con ${montoNum}`,
+      // La apertura se autentica con PIN, no con la sesión de la app, así que
+      // el actor se pasa explícito.
+      usuario: {
+        id: usuario.id,
+        rol: "CAJERO",
+        nombre: `${usuario.nombre} ${usuario.apellido}`.trim(),
+      },
+      datos: {
+        nombreCaja: nuevaCaja.nombreCaja,
+        montoApertura: montoNum,
+      },
+      ...contextoDesdeRequest(request, "/api/caja"),
     });
 
     return NextResponse.json(

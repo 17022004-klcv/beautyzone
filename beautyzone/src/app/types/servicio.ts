@@ -1,3 +1,7 @@
+export const TIPOS_COMISION = ["PORCENTAJE", "MONTO"] as const;
+
+export type TipoComision = (typeof TIPOS_COMISION)[number];
+
 export interface ServicioItem {
   id: number;
   idcategoria: number;
@@ -5,6 +9,7 @@ export interface ServicioItem {
   descripcion?: string | null;
   precio: number;
   porcentajeComision: number;
+  tipoComision?: TipoComision | string | null;
   imagen?: string | null;
   estado: boolean;
   categoria?: {
@@ -21,6 +26,7 @@ export interface CreateServicioDTO {
   descripcion?: string;
   precio: number;
   porcentajeComision?: number;
+  tipoComision?: TipoComision;
   imagen?: string;
 }
 

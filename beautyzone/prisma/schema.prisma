@@ -31,6 +31,9 @@ model Usuario {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   pinCaja   String?  @unique @db.VarChar(6)
+  // Contraseña dedicada para operaciones sensibles (editar arqueos, cierre
+  // administrativo). Es independiente del `password` de inicio de sesión.
+  passwordAdmin String? @map("password_admin") @db.VarChar(100)
 
   rol                    Role           @relation(fields: [idrol], references: [id])
   citasCliente           Cita[]         @relation("CitaCliente")
@@ -41,9 +44,49 @@ model Usuario {
   comisiones             Comision[]
   asistencias            Asistencia[]
   cajasAperturadas       CajaTurno[]    @relation("CajeroTurno")
+  cierresAdministrativos  CierreAdministrativo[] @relation("AdminCierre")
+  bitacoras              Bitacora[]     @relation("BitacoraUsuario")
 
   @@map("usuarios")
 }
+
+/// Registro de auditoría: quién hizo qué, cuándo, desde dónde IP.
+///
+/// Es de solo agregado (append-only): no tiene `updatedAt` y ninguna ruta de la
+/// aplicación permite editar o borrar entradas.
+model Bitacora {
+  id Int @id @default(autoincrement())
+
+  // NULL cuando la acción no se pudo atribuir a un usuario (por ejemplo, un
+  // intento de login con un correo inexistente).
+  idusuario    Int?     @map("id_usuario")
+  usuario      Usuario? @relation("BitacoraUsuario", fields: [idusuario], references: [id], onDelete: SetNull)
+
+  // Verbos en pasado, p. ej. "CREO", "ACTUALIZO", "ELIMINO", "INICIO_SESION".
+  accion      String
+  // Entidad afectada, p. ej. "Usuario", "Venta", "CajaTurno".
+  entidad     String
+  entidadId   String?  @map("entidad_id")
+  descripcion String
+
+  // Contexto de la petición y valores antes/después del cambio.
+  datos       Json?
+  metodo      String?
+  ruta        String?
+  ip          String?  @db.VarChar(64)
+  userAgent   String?  @map("user_agent") @db.VarChar(400)
+  // "EXITO" o "FALLO".
+  resultado   String   @default("EXITO")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([idusuario])
+  @@index([accion, entidad])
+  @@index([entidad, entidadId])
+  @@map("bitacora")
+}
+
 
 model Categoria {
   id        Int      @id @default(autoincrement())
@@ -60,16 +103,21 @@ model Categoria {
 }
 
 model Servicio {
-  id                 Int            @id @default(autoincrement())
-  idcategoria        Int
-  nombre             String
-  descripcion        String?
-  precio             Decimal        @db.Decimal(10, 2)
-  porcentajeComision Decimal        @default(0.00) @map("porcentaje_comision") @db.Decimal(5, 2)
+  id          Int     @id @default(autoincrement())
+  idcategoria Int
+  nombre      String
+  descripcion String?
+  precio      Decimal @db.Decimal(10, 2)
+  // La comisión se guarda en la misma columna según `tipoComision`: un
+  // porcentaje del precio o un monto fijo. Por eso Decimal(10, 2) y no (5, 2),
+  // que se quedaría corto en el modo monto.
+  porcentajeComision Decimal @default(0.00) @map("porcentaje_comision") @db.Decimal(10, 2)
+  // "PORCENTAJE" o "MONTO".
+  tipoComision       String  @default("PORCENTAJE") @map("tipo_comision")
   imagen             String?
-  estado             Boolean        @default(true)
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @updatedAt @map("updated_at")
+  estado             Boolean @default(true)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   categoria     Categoria      @relation(fields: [idcategoria], references: [id])
   detallesCita  DetalleCita[]
@@ -244,4 +292,110 @@ model Asistencia {
   empleado Usuario @relation(fields: [idempleado], references: [id])
 
   @@map("asistencias")
+}
+
+// Cierre administrativo: el conteo final que hace la persona administradora
+// sobre la suma del efectivo de TODAS las cajas del día, menos los gastos que
+// se pagaron en efectivo (luz, agua, etc). Solo se permite uno por día.
+model CierreAdministrativo {
+  id            Int      @id @default(autoincrement())
+  idadmin       Int      @map("id_admin")
+  fecha         DateTime @db.Date
+  // Suma del efectivo esperado de cada caja cerrada del día (apertura + ventas
+  // en efectivo de cada turno). Se recalcula al leer, no se confía en el cliente.
+  totalCajas    Decimal  @default(0.00) @map("total_cajas") @db.Decimal(10, 2)
+  // Suma de los gastos del día pagados con efectivo.
+  totalGastos   Decimal  @default(0.00) @map("total_gastos") @db.Decimal(10, 2)
+  // Lo que la administradora debería tener en mano: totalCajas - totalGastos.
+  totalEsperado Decimal  @default(0.00) @map("total_esperado") @db.Decimal(10, 2)
+  // Conteo físico final. Nulo hasta que se realiza el conteo.
+  montoReal     Decimal? @map("monto_real") @db.Decimal(10, 2)
+  diferencia    Decimal? @db.Decimal(10, 2) // Sobrante (+) o Faltante (-)
+  estado        String   @default("PENDIENTE") // PENDIENTE, REALIZADO
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  admin         Usuario                  @relation("AdminCierre", fields: [idadmin], references: [id])
+  gastos        GastoCierre[]
+  denominaciones DenominacionCierreAdmin?
+
+  @@unique([fecha])
+  @@map("cierres_administrativos")
+}
+
+// Facturas pagadas con efectivo el día del cierre (luz, agua, internet...).
+// Se descuentan solos del total esperado que debe tener la administradora.
+model GastoCierre {
+  id                Int      @id @default(autoincrement())
+  idcierreAdmin     Int      @map("id_cierre_admin")
+  tipo              String // LUZ, AGUA, INTERNET, etc (texto libre del catalogo)
+  numeroComprobante String?  @map("numero_comprobante")
+  monto             Decimal  @db.Decimal(10, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  cierreAdmin CierreAdministrativo @relation(fields: [idcierreAdmin], references: [id], onDelete: Cascade)
+
+  @@map("gastos_cierre")
+}
+
+// Conteo por denominación del cierre administrativo. Espejo de
+// ArqueoDenominacion, pero colgado del cierre y no de un turno de caja.
+model DenominacionCierreAdmin {
+  id                Int      @id @default(autoincrement())
+  idcierreAdmin     Int      @unique @map("id_cierre_admin")
+  // Billetes
+  b100              Int      @default(0)
+  b50               Int      @default(0)
+  b20               Int      @default(0)
+  b10               Int      @default(0)
+  b5                Int      @default(0)
+  b1                Int      @default(0)
+  // Monedas
+  m100              Int      @default(0) // Moneda de $1.00
+  m025              Int      @default(0) // $0.25
+  m010              Int      @default(0) // $0.10
+  m005              Int      @default(0) // $0.05
+  m001              Int      @default(0) // $0.01
+  totalContado      Decimal  @default(0.00) @map("total_contado") @db.Decimal(10, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  cierreAdmin CierreAdministrativo @relation(fields: [idcierreAdmin], references: [id], onDelete: Cascade)
+
+  @@map("denominaciones_cierre_admin")
+}
+// Programacion del respaldo automatico. Es una sola fila (id 1): el admin
+// decide dia, hora y frecuencia, y el servidor la revisa cada minuto.
+// Frecuencia: DIARIO, SEMANAL, MENSUAL.
+model BackupConfig {
+  id             Int       @id @default(1)
+  frecuencia     String    @default("DIARIO")
+  diaSemana      Int       @default(1) // 0=domingo ... 6=sabado (solo SEMANAL)
+  diaMes         Int       @default(1) // 1..28 (solo MENSUAL)
+  hora           Int       @default(2) // 0..23
+  minuto         Int       @default(0) // 0..59
+  activo         Boolean   @default(true)
+  ultimoEjecutado DateTime? @map("ultimo_ejecutado")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@map("backup_config")
+}
+
+// Un respaldo en disco (volcado .sql hecho con pg_dump). Solo se conservan los
+// MAXIMO_BACKUPS mas recientes: al crear uno nuevo se borran los anteriores.
+model Backup {
+  id            Int       @id @default(autoincrement())
+  archivo       String
+  ruta          String
+  tamanoBytes   Int       @default(0) @map("tamano_bytes")
+  estado        String    @default("PENDIENTE") // PENDIENTE, EXITOSO, ERROR
+  mensaje       String?
+  origen        String    @default("MANUAL") // MANUAL, PROGRAMADO
+  iniciadoEn    DateTime  @default(now()) @map("iniciado_en")
+  finalizadoEn DateTime? @map("finalizado_en")
+  creadoEn      DateTime  @default(now()) @map("creado_en")
+
+  @@index([creadoEn])
+  @@map("backups")
 }

@@ -1,22 +1,23 @@
-import { AperturaCajaDTO, CierreCajaDTO } from "@/src/app/types/caja";
+import {
+  AperturaCajaDTO,
+  CajaTurno,
+  CierreCajaDTO,
+  EstadoCaja,
+  ResumenCierre,
+} from "@/src/app/types/caja";
 
 export class CajaService {
-  // Método para obtener el estado de la caja activa
-  static async obtenerEstadoCaja(idcajero: number = 1) {
-    const res = await fetch(`/api/caja?idcajero=${idcajero}`);
+  // Estado de la caja activa. El cajero se deduce del turno abierto, no del
+  // cliente: el endpoint no acepta idcajero.
+  static async obtenerEstadoCaja(): Promise<EstadoCaja> {
+    const res = await fetch("/api/caja", { cache: "no-store" });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Error al verificar caja activa");
+      throw new Error("Error al verificar la caja activa");
     }
     return res.json();
   }
 
-  // Alias para mantener compatibilidad si lo usas en otro lugar
-  static async getCajaActiva(idcajero: number = 1) {
-    return this.obtenerEstadoCaja(idcajero);
-  }
-
-  static async abrirCaja(data: AperturaCajaDTO) {
+  static async abrirCaja(data: AperturaCajaDTO): Promise<CajaTurno> {
     const res = await fetch("/api/caja", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -24,13 +25,15 @@ export class CajaService {
     });
 
     if (!res.ok) {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       throw new Error(err.error || "Error al abrir la caja");
     }
-    return res.json();
+
+    const data2 = await res.json();
+    return data2.caja;
   }
 
-  static async cerrarCaja(data: CierreCajaDTO) {
+  static async cerrarCaja(data: CierreCajaDTO): Promise<ResumenCierre> {
     const res = await fetch("/api/caja/cierre", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -38,9 +41,13 @@ export class CajaService {
     });
 
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Error al efectuar el cierre de caja");
+      const err = await res.json().catch(() => ({}));
+      throw new Error(
+        err.error || "Error al efectuar el cierre de caja",
+      );
     }
-    return res.json();
+
+    const data2 = await res.json();
+    return data2.resumen;
   }
 }

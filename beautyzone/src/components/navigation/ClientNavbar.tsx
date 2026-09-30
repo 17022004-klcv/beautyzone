@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/public/img/logo.jpg";
 import { useRouter } from "next/navigation";
+import { handleLogout as handleLogoutServer } from "@/src/app/handlers/auth.handler";
 import {
   User,
   LogOut,
@@ -40,11 +41,14 @@ export function ClientNavbar() {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setDropdownOpen(false);
     localStorage.removeItem("user");
     localStorage.removeItem("user_role");
     setUsuario(null);
+    // Borra la cookie de sesión del servidor para que la bitácora no siga
+    // atribuyendo acciones a este usuario.
+    await handleLogoutServer().catch(() => undefined);
     router.push("/");
   };
 

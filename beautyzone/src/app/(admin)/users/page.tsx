@@ -7,6 +7,7 @@ import {
   FileSpreadsheet,
   FileText,
   Edit,
+  Eye,
   Power,
   Loader2,
 } from "lucide-react";
@@ -16,10 +17,18 @@ import CategoryFilter from "@/src/components/ui/CategoryFilter";
 import SearchBar from "@/src/components/ui/SearchBar";
 import SearchableSelect from "@/src/components/ui/SearchableSelect";
 import Table from "@/src/components/ui/DataTable";
+import { useToast } from "@/src/components/ui/Toast";
+import DetalleUsuarioModal from "@/src/components/admin/DetalleUsuarioModal";
+import DetalleRolModal from "@/src/components/admin/DetalleRolModal";
+import { useTippy } from "@/src/app/hooks/useTippy";
+import { showConfirm } from "@/src/lib/sweetalert";
 import { UsuarioItem, RoleItem } from "@/src/app/types/usuario";
 import { ExportService } from "@/src/app/services/export.service";
 
 const TABS = ["Usuarios", "Roles"];
+
+const CLASE_BOTON_ACCION =
+  "p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed";
 
 const ESTADO_OPTIONS = [
   { label: "Todos los estados", value: "ALL" },
@@ -28,6 +37,9 @@ const ESTADO_OPTIONS = [
 ];
 
 export default function UsuariosView() {
+  useTippy();
+
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState("Usuarios");
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([]);
   const [roles, setRoles] = useState<RoleItem[]>([]);
@@ -45,6 +57,10 @@ export default function UsuariosView() {
     null,
   );
   const [rolEditando, setRolEditando] = useState<RoleItem | null>(null);
+
+  // Fichas de solo lectura
+  const [usuarioDetalle, setUsuarioDetalle] = useState<UsuarioItem | null>(null);
+  const [rolDetalle, setRolDetalle] = useState<RoleItem | null>(null);
 
   // Formulario Usuario
   const [formUser, setFormUser] = useState({
@@ -219,26 +235,75 @@ export default function UsuariosView() {
     }
   };
 
+  const leerError = async (res: Response, porDefecto: string) => {
+    const detalle = await res.json().catch(() => null);
+    return detalle?.error ?? porDefecto;
+  };
+
   // Toggle Estado Usuario
   const toggleEstadoUsuario = async (u: UsuarioItem) => {
+    const activar = !u.estado;
+
+    if (!activar) {
+      const confirmado = await showConfirm(
+        "¿Desactivar el usuario?",
+        `"${u.nombre} ${u.apellido}" no podrá iniciar sesión hasta que se reactive.`,
+      );
+      if (!confirmado) return;
+    }
+
     const res = await fetch(`/api/usuarios/${u.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: !u.estado }),
+      body: JSON.stringify({ estado: activar }),
     });
 
-    if (res.ok) fetchData();
+    if (!res.ok) {
+      toast.error(
+        "No se pudo cambiar el estado",
+        await leerError(res, "Ocurrió un error al actualizar el usuario."),
+      );
+      return;
+    }
+
+    toast.exito(
+      activar ? "Usuario activado" : "Usuario desactivado",
+      `${u.nombre} ${u.apellido} ahora está ${activar ? "activo" : "inactivo"}.`,
+    );
+    fetchData();
   };
 
   // Toggle Estado Rol
   const toggleEstadoRol = async (r: RoleItem) => {
+    const activar = !r.estado;
+
+    if (!activar) {
+      const confirmado = await showConfirm(
+        "¿Desactivar el rol?",
+        `Los usuarios con el rol "${r.nombre}" dejarán de verlo como opción al asignar roles.`,
+      );
+      if (!confirmado) return;
+    }
+
     const res = await fetch(`/api/roles/${r.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: !r.estado }),
+      body: JSON.stringify({ estado: activar }),
     });
 
-    if (res.ok) fetchData();
+    if (!res.ok) {
+      toast.error(
+        "No se pudo cambiar el estado",
+        await leerError(res, "Ocurrió un error al actualizar el rol."),
+      );
+      return;
+    }
+
+    toast.exito(
+      activar ? "Rol activado" : "Rol desactivado",
+      `El rol ${r.nombre} ahora está ${activar ? "activo" : "inactivo"}.`,
+    );
+    fetchData();
   };
 
   const handleExport = (format: "excel" | "pdf") => {
@@ -299,20 +364,49 @@ export default function UsuariosView() {
       accessorKey: (u: UsuarioItem) => (
         <div className="flex items-center justify-end gap-1">
           <button
+            type="button"
+            onClick={() => setUsuarioDetalle(u)}
+            data-tippy-content="Ver ficha del usuario"
+            aria-label={`Ver ficha de ${u.nombre} ${u.apellido}`}
+            className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleOpenModal(u)}
-            className="p-1.5 text-[#32130E] hover:bg-white/80 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer"
-            title="Editar"
+            data-tippy-content="Editar usuario"
+            aria-label={`Editar ${u.nombre} ${u.apellido}`}
+            className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
           >
             <Edit className="w-3.5 h-3.5" />
           </button>
+
           <button
+            type="button"
+            onClick={() => ExportService.exportarUsuario(u)}
+            data-tippy-content="Descargar ficha (PDF)"
+            aria-label={`Descargar ficha de ${u.nombre} ${u.apellido}`}
+            className={`${CLASE_BOTON_ACCION} text-[#7A5C55] hover:bg-white/80`}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
             onClick={() => toggleEstadoUsuario(u)}
-            className={`p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer ${
+            data-tippy-content={u.estado ? "Desactivar usuario" : "Activar usuario"}
+            aria-label={
+              u.estado
+                ? `Desactivar ${u.nombre} ${u.apellido}`
+                : `Activar ${u.nombre} ${u.apellido}`
+            }
+            className={`${CLASE_BOTON_ACCION} ${
               u.estado
                 ? "text-[#B83A3A] hover:bg-[#B83A3A]/10"
                 : "text-[#2E6F40] hover:bg-[#2E6F40]/10"
             }`}
-            title={u.estado ? "Desactivar" : "Activar"}
           >
             <Power className="w-3.5 h-3.5" />
           </button>
@@ -354,20 +448,47 @@ export default function UsuariosView() {
       accessorKey: (r: RoleItem) => (
         <div className="flex items-center justify-end gap-1">
           <button
+            type="button"
+            onClick={() => setRolDetalle(r)}
+            data-tippy-content="Ver ficha del rol"
+            aria-label={`Ver ficha del rol ${r.nombre}`}
+            className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleOpenModal(r)}
-            className="p-1.5 text-[#32130E] hover:bg-white/80 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer"
-            title="Editar"
+            data-tippy-content="Editar rol"
+            aria-label={`Editar el rol ${r.nombre}`}
+            className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
           >
             <Edit className="w-3.5 h-3.5" />
           </button>
+
           <button
+            type="button"
+            onClick={() => ExportService.exportarRol(r)}
+            data-tippy-content="Descargar ficha (PDF)"
+            aria-label={`Descargar ficha del rol ${r.nombre}`}
+            className={`${CLASE_BOTON_ACCION} text-[#7A5C55] hover:bg-white/80`}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
             onClick={() => toggleEstadoRol(r)}
-            className={`p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer ${
+            data-tippy-content={r.estado ? "Desactivar rol" : "Activar rol"}
+            aria-label={
+              r.estado ? `Desactivar el rol ${r.nombre}` : `Activar el rol ${r.nombre}`
+            }
+            className={`${CLASE_BOTON_ACCION} ${
               r.estado
                 ? "text-[#B83A3A] hover:bg-[#B83A3A]/10"
                 : "text-[#2E6F40] hover:bg-[#2E6F40]/10"
             }`}
-            title={r.estado ? "Desactivar" : "Activar"}
           >
             <Power className="w-3.5 h-3.5" />
           </button>
@@ -655,6 +776,30 @@ export default function UsuariosView() {
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* MODAL FICHA USUARIO */}
+      <Modal
+        isOpen={!!usuarioDetalle}
+        onClose={() => setUsuarioDetalle(null)}
+        title={
+          usuarioDetalle
+            ? `${usuarioDetalle.nombre} ${usuarioDetalle.apellido}`
+            : "Detalle del Usuario"
+        }
+        subtitle="Información registrada del usuario"
+      >
+        {usuarioDetalle && <DetalleUsuarioModal usuario={usuarioDetalle} />}
+      </Modal>
+
+      {/* MODAL FICHA ROL */}
+      <Modal
+        isOpen={!!rolDetalle}
+        onClose={() => setRolDetalle(null)}
+        title={rolDetalle?.nombre ?? "Detalle del Rol"}
+        subtitle="Información del nivel de acceso"
+      >
+        {rolDetalle && <DetalleRolModal rol={rolDetalle} />}
       </Modal>
     </div>
   );

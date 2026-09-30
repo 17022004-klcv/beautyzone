@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/src/lib/db";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 // GET: Obtener todos los roles
 export async function GET() {
@@ -35,6 +39,15 @@ export async function POST(req: Request) {
         nombre: nombre.trim(),
         estado: true,
       },
+    });
+
+    await BitacoraService.registrar({
+      accion: "CREO",
+      entidad: "Rol",
+      entidadId: nuevoRol.id,
+      descripcion: `Creó el rol ${nuevoRol.nombre}`,
+      datos: { nombre: nuevoRol.nombre },
+      ...contextoDesdeRequest(req, "/api/roles"),
     });
 
     return NextResponse.json(nuevoRol, { status: 201 });

@@ -29,7 +29,7 @@ export default function AdminHomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F0ECEA]">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center justify-center text-center">
           {/* Contenedor de la Tijera */}
           <div className="relative mb-6">

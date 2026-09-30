@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { ServicioService } from "@/src/app/services/servicio.service";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const catId = searchParams.get("categoriaId");
+    const incluirInactivos = searchParams.get("incluirInactivos") === "1";
 
     const servicios = await ServicioService.obtenerServicios(
       catId ? Number(catId) : undefined,
+      incluirInactivos,
     );
     return NextResponse.json(servicios);
   } catch (error) {
@@ -44,7 +50,23 @@ export async function POST(request: Request) {
       porcentajeComision: isNaN(porcentajeComisionNum)
         ? 0
         : porcentajeComisionNum,
+      tipoComision: body.tipoComision,
       imagen: body.imagen || null,
+    });
+
+    await BitacoraService.registrar({
+      accion: "CREO",
+      entidad: "Servicio",
+      entidadId: nuevoServicio.id,
+      descripcion: `Creó el servicio ${nuevoServicio.nombre}`,
+      datos: {
+        nombre: nuevoServicio.nombre,
+        precio: String(nuevoServicio.precio),
+        porcentajeComision: String(nuevoServicio.porcentajeComision),
+        tipoComision: nuevoServicio.tipoComision,
+        idCategoria: nuevoServicio.idcategoria,
+      },
+      ...contextoDesdeRequest(request, "/api/servicios"),
     });
 
     return NextResponse.json(nuevoServicio, { status: 201 });

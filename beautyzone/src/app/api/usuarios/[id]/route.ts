@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { UsuarioService } from "@/src/app/services/usuario.service";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 export async function PUT(
   request: Request,
@@ -18,6 +22,22 @@ export async function PUT(
 
     const body = await request.json();
     const usuarioActualizado = await UsuarioService.actualizarUsuario(id, body);
+
+    await BitacoraService.registrar({
+      accion: "ACTUALIZO",
+      entidad: "Usuario",
+      entidadId: id,
+      descripcion: `Actualizó al usuario ${usuarioActualizado.nombre} ${usuarioActualizado.apellido} (${usuarioActualizado.correo})`,
+      datos: {
+        campos: Object.keys(body).filter((c) => c !== "password" && c !== "passwordAdmin"),
+        correo: usuarioActualizado.correo,
+        idRol: usuarioActualizado.idrol,
+        estado: usuarioActualizado.estado,
+        cambioPassword: Boolean(body.password),
+        cambioPasswordAdmin: body.passwordAdmin === "" ? "eliminada" : Boolean(body.passwordAdmin),
+      },
+      ...contextoDesdeRequest(request, `/api/usuarios/${id}`),
+    });
 
     return NextResponse.json(usuarioActualizado);
   } catch (error: any) {
@@ -48,6 +68,14 @@ export async function DELETE(
       id,
       false,
     );
+
+    await BitacoraService.registrar({
+      accion: "DESACTIVO",
+      entidad: "Usuario",
+      entidadId: id,
+      descripcion: `Desactivó al usuario ${usuarioDesactivado.nombre} ${usuarioDesactivado.apellido} (${usuarioDesactivado.correo})`,
+      ...contextoDesdeRequest(request, `/api/usuarios/${id}`),
+    });
 
     return NextResponse.json({
       message: "Usuario desactivado exitosamente",

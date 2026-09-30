@@ -68,7 +68,7 @@ export function useUsuariosPage() {
       setUsuarioEditando(null);
     } else {
       const err = await res.json();
-      alert(err.error || "Error al guardar el usuario");
+      alert(err.detalles || err.error || "Error al guardar el usuario");
     }
   };
 

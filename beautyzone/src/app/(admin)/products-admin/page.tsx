@@ -8,6 +8,8 @@ import {
   FileText,
   Edit,
   Power,
+  Eye,
+  Trash2,
 } from "lucide-react";
 import Button from "@/src/components/ui/Button";
 import Modal from "@/src/components/ui/Modal";
@@ -15,20 +17,38 @@ import CategoryFilter from "@/src/components/ui/CategoryFilter";
 import DataTable from "@/src/components/ui/DataTable";
 import SearchBar from "@/src/components/ui/SearchBar";
 import SearchableSelect from "@/src/components/ui/SearchableSelect";
+import { useToast } from "@/src/components/ui/Toast";
 import { Producto, Categoria } from "@/src/app/types/producto";
 import { ExportService } from "@/src/app/services/export.service";
+import { showConfirm } from "@/src/lib/sweetalert";
+import { useTippy } from "@/src/app/hooks/useTippy";
 import NuevoProductoForm from "@/src/components/forms/NuevoProductoForm";
 import NuevaCategoriaForm from "@/src/components/forms/NuevaCategoriaForm";
+import EditarProductoForm from "@/src/components/forms/EditarProductoForm";
+import EditarCategoriaForm from "@/src/components/forms/EditarCategoriaForm";
+import DetalleProductoModal from "@/src/components/admin/DetalleProductoModal";
+import DetalleCategoriaModal from "@/src/components/admin/DetalleCategoriaModal";
 
 const TABS = ["Productos", "Categorías"];
 
+const CLASE_BOTON_ACCION =
+  "p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed";
+
 export default function ProductosView() {
+  const toast = useToast();
+  useTippy();
+
   const [activeTab, setActiveTab] = useState("Productos");
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  const [productoDetalle, setProductoDetalle] = useState<Producto | null>(null);
+  const [productoEditando, setProductoEditando] = useState<Producto | null>(null);
+  const [categoriaDetalle, setCategoriaDetalle] = useState<Categoria | null>(null);
+  const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null);
 
   // Estados para filtros
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,11 +58,10 @@ export default function ProductosView() {
   const [selectedEstadoFilter, setSelectedEstadoFilter] = useState("TODOS");
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
     try {
       const [resProd, resCat] = await Promise.all([
-        fetch("/api/productos"),
-        fetch("/api/categorias"),
+        fetch("/api/productos?incluirInactivos=1"),
+        fetch("/api/categorias?incluirInactivos=1"),
       ]);
 
       if (resProd.ok) {
@@ -56,13 +75,23 @@ export default function ProductosView() {
       }
     } catch (error) {
       console.error("Error cargando datos:", error);
+      toast.error(
+        "No se pudieron cargar los datos",
+        "Revisa que el servidor esté disponible.",
+      );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
+
+  const recargar = useCallback(() => {
+    setLoading(true);
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
-    fetchData();
+    const temporizador = setTimeout(fetchData, 0);
+    return () => clearTimeout(temporizador);
   }, [fetchData]);
 
   // Limpiar filtros al cambiar de pestaña
@@ -74,13 +103,114 @@ export default function ProductosView() {
     setSelectedEstadoFilter("TODOS");
   };
 
-  const toggleEstadoProducto = async (prod: Producto) => {
-    console.log("Cambiar estado de producto:", prod);
+  const leerError = async (res: Response, porDefecto: string) => {
+    const detalle = await res.json().catch(() => null);
+    return detalle?.error ?? porDefecto;
   };
 
-  const toggleEstadoCategoria = async (cat: Categoria) => {
-    console.log("Cambiar estado de categoría:", cat);
-  };
+  const toggleEstadoProducto = useCallback(
+    async (prod: Producto) => {
+      const activar = !prod.estado;
+
+      const res = await fetch(`/api/productos/${prod.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: activar }),
+      });
+
+      if (!res.ok) {
+        toast.error(
+          "No se pudo cambiar el estado",
+          await leerError(res, "Ocurrió un error al actualizar el producto."),
+        );
+        return;
+      }
+
+      toast.exito(
+        activar ? "Producto activado" : "Producto desactivado",
+        `${prod.nombre} ahora está ${activar ? "disponible" : "fuera del inventario"}.`,
+      );
+      recargar();
+    },
+    [recargar, toast],
+  );
+
+  const toggleEstadoCategoria = useCallback(
+    async (cat: Categoria) => {
+      const activar = !cat.estado;
+
+      const res = await fetch(`/api/categorias/${cat.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: activar }),
+      });
+
+      if (!res.ok) {
+        toast.error(
+          "No se pudo cambiar el estado",
+          await leerError(res, "Ocurrió un error al actualizar la categoría."),
+        );
+        return;
+      }
+
+      toast.exito(
+        activar ? "Categoría activada" : "Categoría desactivada",
+        `${cat.nombre} ahora está ${activar ? "disponible" : "oculta"}.`,
+      );
+      recargar();
+    },
+    [recargar, toast],
+  );
+
+  const eliminarProducto = useCallback(
+    async (prod: Producto) => {
+      const confirmado = await showConfirm(
+        "¿Eliminar el producto?",
+        `"${prod.nombre}" se elimina de forma permanente. Si ya aparece en alguna venta no se podrá borrar: desactívalo para conservar el historial.`,
+      );
+
+      if (!confirmado) return;
+
+      const res = await fetch(`/api/productos/${prod.id}`, { method: "DELETE" });
+
+      if (!res.ok) {
+        toast.error(
+          "No se pudo eliminar",
+          await leerError(res, "Ocurrió un error al eliminar el producto."),
+        );
+        return;
+      }
+
+      toast.exito("Producto eliminado", `${prod.nombre} ya no está en el inventario.`);
+      recargar();
+    },
+    [recargar, toast],
+  );
+
+  const eliminarCategoria = useCallback(
+    async (cat: Categoria) => {
+      const confirmado = await showConfirm(
+        "¿Eliminar la categoría?",
+        `"${cat.nombre}" se elimina de forma permanente. No se puede borrar si tiene productos o servicios asociados.`,
+      );
+
+      if (!confirmado) return;
+
+      const res = await fetch(`/api/categorias/${cat.id}`, { method: "DELETE" });
+
+      if (!res.ok) {
+        toast.error(
+          "No se pudo eliminar",
+          await leerError(res, "Ocurrió un error al eliminar la categoría."),
+        );
+        return;
+      }
+
+      toast.exito("Categoría eliminada", `${cat.nombre} ya no existe.`);
+      recargar();
+    },
+    [recargar, toast],
+  );
 
   const handleExport = (format: "excel" | "pdf") => {
     if (activeTab === "Productos") {
@@ -218,35 +348,61 @@ export default function ProductosView() {
         accessorKey: (p: Producto) => (
           <div className="flex justify-end space-x-1">
             <button
-              onClick={() => {}}
-              className="p-1.5 text-[#32130E] hover:bg-white/80 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer"
-              title="Editar"
+              onClick={() => setProductoDetalle(p)}
+              data-tippy-content="Ver ficha del producto"
+              aria-label={`Ver ficha de ${p.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => setProductoEditando(p)}
+              data-tippy-content="Editar producto"
+              aria-label={`Editar ${p.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
             >
               <Edit className="w-3.5 h-3.5" />
             </button>
+
+            <button
+              onClick={() => ExportService.exportarProducto(p)}
+              data-tippy-content="Descargar ficha (PDF)"
+              aria-label={`Descargar ficha de ${p.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#7A5C55] hover:bg-white/80`}
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+
             <button
               onClick={() => toggleEstadoProducto(p)}
-              className="p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs text-[#B83A3A] hover:bg-[#B83A3A]/10 cursor-pointer"
-              title={p.estado ? "Desactivar" : "Activar"}
+              data-tippy-content={p.estado ? "Desactivar producto" : "Activar producto"}
+              aria-label={
+                p.estado ? `Desactivar ${p.nombre}` : `Activar ${p.nombre}`
+              }
+              className={`${CLASE_BOTON_ACCION} text-[#B83A3A] hover:bg-[#B83A3A]/10`}
             >
               <Power className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => eliminarProducto(p)}
+              data-tippy-content="Eliminar producto"
+              aria-label={`Eliminar ${p.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#B83A3A] hover:bg-[#B83A3A]/10`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         ),
       },
     ],
-    [],
+    [toggleEstadoProducto, eliminarProducto],
   );
 
   // Definición de columnas para Categorías
   const categoriaColumns = useMemo(
     () => [
-      {
-        header: "ID",
-        accessorKey: (c: Categoria) => (
-          <span className="text-[#7A5C55]">#{c.id}</span>
-        ),
-      },
       {
         header: "Nombre de la Categoría",
         accessorKey: (c: Categoria) => (
@@ -280,24 +436,54 @@ export default function ProductosView() {
         accessorKey: (c: Categoria) => (
           <div className="flex justify-end space-x-1">
             <button
-              onClick={() => {}}
-              className="p-1.5 text-[#32130E] hover:bg-white/80 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs cursor-pointer"
-              title="Editar"
+              onClick={() => setCategoriaDetalle(c)}
+              data-tippy-content="Ver ficha de la categoría"
+              aria-label={`Ver ficha de ${c.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => setCategoriaEditando(c)}
+              data-tippy-content="Editar categoría"
+              aria-label={`Editar ${c.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#32130E] hover:bg-white/80`}
             >
               <Edit className="w-3.5 h-3.5" />
             </button>
+
+            <button
+              onClick={() => ExportService.exportarCategoria(c)}
+              data-tippy-content="Descargar ficha (PDF)"
+              aria-label={`Descargar ficha de ${c.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#7A5C55] hover:bg-white/80`}
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+
             <button
               onClick={() => toggleEstadoCategoria(c)}
-              className="p-1.5 rounded-xl transition border border-transparent hover:border-white/80 shadow-2xs text-[#B83A3A] hover:bg-[#B83A3A]/10 cursor-pointer"
-              title={c.estado ? "Desactivar" : "Activar"}
+              data-tippy-content={c.estado ? "Desactivar categoría" : "Activar categoría"}
+              aria-label={c.estado ? `Desactivar ${c.nombre}` : `Activar ${c.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#B83A3A] hover:bg-[#B83A3A]/10`}
             >
               <Power className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => eliminarCategoria(c)}
+              data-tippy-content="Eliminar categoría"
+              aria-label={`Eliminar ${c.nombre}`}
+              className={`${CLASE_BOTON_ACCION} text-[#B83A3A] hover:bg-[#B83A3A]/10`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         ),
       },
     ],
-    [],
+    [toggleEstadoCategoria, eliminarCategoria],
   );
 
   return (
@@ -447,12 +633,69 @@ export default function ProductosView() {
         {activeTab === "Productos" ? (
           <NuevoProductoForm
             onClose={() => setIsModalOpen(false)}
-            onSuccess={fetchData}
+            onSuccess={recargar}
           />
         ) : (
           <NuevaCategoriaForm
             onClose={() => setIsModalOpen(false)}
-            onSuccess={fetchData}
+            onSuccess={recargar}
+          />
+        )}
+      </Modal>
+
+      {/* MODAL DETALLE PRODUCTO */}
+      <Modal
+        isOpen={!!productoDetalle}
+        onClose={() => setProductoDetalle(null)}
+        title={productoDetalle?.nombre ?? "Detalle del Producto"}
+        subtitle="Ficha de inventario"
+        maxWidth="lg"
+      >
+        {productoDetalle && <DetalleProductoModal producto={productoDetalle} />}
+      </Modal>
+
+      {/* MODAL EDITAR PRODUCTO */}
+      <Modal
+        isOpen={!!productoEditando}
+        onClose={() => setProductoEditando(null)}
+        title="Editar Producto"
+        subtitle="Los cambios quedan registrados en la auditoría"
+        maxWidth="lg"
+      >
+        {productoEditando && (
+          <EditarProductoForm
+            producto={productoEditando}
+            onClose={() => setProductoEditando(null)}
+            onSuccess={recargar}
+          />
+        )}
+      </Modal>
+
+      {/* MODAL DETALLE CATEGORÍA */}
+      <Modal
+        isOpen={!!categoriaDetalle}
+        onClose={() => setCategoriaDetalle(null)}
+        title={categoriaDetalle?.nombre ?? "Detalle de la Categoría"}
+        subtitle="Ficha de clasificación"
+        maxWidth="lg"
+      >
+        {categoriaDetalle && (
+          <DetalleCategoriaModal categoria={categoriaDetalle} />
+        )}
+      </Modal>
+
+      {/* MODAL EDITAR CATEGORÍA */}
+      <Modal
+        isOpen={!!categoriaEditando}
+        onClose={() => setCategoriaEditando(null)}
+        title="Editar Categoría"
+        subtitle="Los cambios quedan registrados en la auditoría"
+      >
+        {categoriaEditando && (
+          <EditarCategoriaForm
+            categoria={categoriaEditando}
+            onClose={() => setCategoriaEditando(null)}
+            onSuccess={recargar}
           />
         )}
       </Modal>

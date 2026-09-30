@@ -33,7 +33,27 @@ export interface Categoria {
   updatedAt?: string | Date;
 }
 
+export const TIPOS_CATEGORIA = ["PRODUCTO", "SERVICIO"] as const;
+
+export type TipoCategoria = (typeof TIPOS_CATEGORIA)[number];
+
 export interface CreateCategoriaDTO {
   nombre: string;
   tipo: "PRODUCTO" | "SERVICIO";
+}
+
+export interface UpdateProductoDTO {
+  idcategoria?: number | string;
+  nombre?: string;
+  descripcion?: string;
+  precio?: number;
+  stock?: number | string;
+  stockMinimo?: number | string;
+  estado?: boolean;
+}
+
+export interface UpdateCategoriaDTO {
+  nombre?: string;
+  tipo?: "PRODUCTO" | "SERVICIO";
+  estado?: boolean;
 }

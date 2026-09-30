@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/src/lib/db";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -23,6 +27,15 @@ export async function PUT(req: Request, { params }: Params) {
         ...(nombre !== undefined && { nombre: nombre.trim() }),
         ...(estado !== undefined && { estado }),
       },
+    });
+
+    await BitacoraService.registrar({
+      accion: "ACTUALIZO",
+      entidad: "Rol",
+      entidadId: roleId,
+      descripcion: `Actualizó el rol ${rolActualizado.nombre}`,
+      datos: { campos: Object.keys(body), nombre: rolActualizado.nombre, estado: rolActualizado.estado },
+      ...contextoDesdeRequest(req, `/api/roles/${roleId}`),
     });
 
     return NextResponse.json(rolActualizado);
@@ -49,6 +62,14 @@ export async function DELETE(req: Request, { params }: Params) {
     const rolDesactivado = await db.role.update({
       where: { id: roleId },
       data: { estado: false },
+    });
+
+    await BitacoraService.registrar({
+      accion: "DESACTIVO",
+      entidad: "Rol",
+      entidadId: roleId,
+      descripcion: `Desactivó el rol ${rolDesactivado.nombre}`,
+      ...contextoDesdeRequest(req, `/api/roles/${roleId}`),
     });
 
     return NextResponse.json(rolDesactivado);

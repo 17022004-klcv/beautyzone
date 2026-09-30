@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 export async function POST(request: Request) {
   try {
@@ -28,6 +32,20 @@ export async function POST(request: Request) {
     await writeFile(filePath, buffer);
 
     // Devolver la ruta pública
+    await BitacoraService.registrar({
+      accion: "SUBIO_ARCHIVO",
+      entidad: "Archivo",
+      descripcion: `Subió el archivo ${file.name}`,
+      datos: {
+        nombreOriginal: file.name,
+        nombreGuardado: filename,
+        tipo: file.type,
+        pesoBytes: buffer.length,
+        url: `/uploads/${filename}`,
+      },
+      ...contextoDesdeRequest(request, "/api/upload"),
+    });
+
     return NextResponse.json({ url: `/uploads/${filename}` });
   } catch (error) {
     console.error("Error al subir imagen:", error);

@@ -14,6 +14,8 @@ export interface UsuarioItem {
   correo: string;
   password?: string;
   telefono?: string | null;
+  pinCaja?: string | null;
+  passwordAdmin?: string | null;
   estado: boolean;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -27,6 +29,8 @@ export interface CreateUsuarioDTO {
   correo: string;
   password?: string;
   telefono?: string;
+  pinCaja?: string;
+  passwordAdmin?: string;
   estado?: boolean;
 }
 
@@ -37,5 +41,7 @@ export interface UpdateUsuarioDTO {
   correo?: string;
   password?: string;
   telefono?: string;
+  pinCaja?: string;
+  passwordAdmin?: string;
   estado?: boolean;
 }

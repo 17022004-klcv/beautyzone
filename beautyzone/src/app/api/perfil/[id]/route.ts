@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/src/lib/db";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -140,6 +144,22 @@ export async function PUT(req: Request, { params }: Params) {
           },
         },
       },
+    });
+
+    await BitacoraService.registrar({
+      accion: "ACTUALIZO",
+      entidad: "Usuario",
+      entidadId: userId,
+      descripcion: `Actualizó su perfil (${usuarioActualizado.nombre} ${usuarioActualizado.apellido})`,
+      datos: {
+        campos: Object.keys(body).filter(
+          (c) => c !== "passwordActual" && c !== "nuevaPassword",
+        ),
+        correo: usuarioActualizado.correo,
+        telefono: usuarioActualizado.telefono,
+        cambioPassword: Boolean(nuevaPassword && nuevaPassword.trim() !== ""),
+      },
+      ...contextoDesdeRequest(req, `/api/perfil/${userId}`),
     });
 
     return NextResponse.json(usuarioActualizado);

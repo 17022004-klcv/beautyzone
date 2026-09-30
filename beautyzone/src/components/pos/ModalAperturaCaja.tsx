@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { CajaService } from "@/src/app/services/caja.service";
 
 interface ModalAperturaProps {
   isOpen: boolean;
@@ -36,23 +37,13 @@ export default function ModalAperturaCaja({
 
     try {
       setLoading(true);
-      const res = await fetch("/api/caja", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombreCaja,
-          passwordPin,
-          montoApertura: montoNum,
-        }),
+      const caja = await CajaService.abrirCaja({
+        nombreCaja,
+        passwordPin,
+        montoApertura: montoNum,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Error al abrir la caja");
-      }
-
-      onAperturaExitosa(data.caja);
+      onAperturaExitosa(caja);
     } catch (err: any) {
       setError(err.message || "Error al abrir la caja");
     } finally {

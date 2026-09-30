@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/src/lib/db";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 // GET: Obtener asistencias con filtros (Buscador por nombre, filtro tipo y filtro fecha)
 export async function GET(req: Request) {
@@ -111,6 +115,15 @@ export async function POST(req: Request) {
           },
         },
       },
+    });
+
+    await BitacoraService.registrar({
+      accion: "REGISTRO",
+      entidad: "Asistencia",
+      entidadId: nuevaAsistencia.id,
+      descripcion: `Marcó ${tipoRegistro} a ${nuevaAsistencia.empleado.nombre} ${nuevaAsistencia.empleado.apellido}`,
+      datos: { tipoRegistro, fecha: fechaFinal.toISOString(), hora: horaFinal },
+      ...contextoDesdeRequest(req, "/api/asistencias"),
     });
 
     return NextResponse.json(nuevaAsistencia, { status: 201 });

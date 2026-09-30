@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { UsuarioService } from "@/src/app/services/usuario.service";
+import {
+  BitacoraService,
+  contextoDesdeRequest,
+} from "@/src/app/services/bitacora.service";
 
 export async function GET(request: Request) {
   try {
@@ -40,6 +44,24 @@ export async function POST(request: Request) {
     }
 
     const nuevoUsuario = await UsuarioService.crearUsuario(body);
+
+    await BitacoraService.registrar({
+      accion: "CREO",
+      entidad: "Usuario",
+      entidadId: nuevoUsuario.id,
+      descripcion: `Creó al usuario ${nuevoUsuario.nombre} ${nuevoUsuario.apellido} (${nuevoUsuario.correo})`,
+      datos: {
+        nombre: nuevoUsuario.nombre,
+        apellido: nuevoUsuario.apellido,
+        correo: nuevoUsuario.correo,
+        idRol: nuevoUsuario.idrol,
+        telefono: nuevoUsuario.telefono,
+        pinCajaAsignado: Boolean(nuevoUsuario.pinCaja),
+        passwordAdminAsignado: Boolean(nuevoUsuario.passwordAdmin),
+      },
+      ...contextoDesdeRequest(request, "/api/usuarios"),
+    });
+
     return NextResponse.json(nuevoUsuario, { status: 201 });
   } catch (error: any) {
     console.error("❌ Error en POST /api/usuarios:", error);

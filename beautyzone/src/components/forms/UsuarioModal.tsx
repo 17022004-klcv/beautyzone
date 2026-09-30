@@ -29,7 +29,16 @@ export function UsuarioModal({
     telefono: "",
     idrol: roles[0]?.id || 1,
     password: "",
+    pinCaja: "",
+    passwordAdmin: "",
   });
+  const [quitarPin, setQuitarPin] = useState(false);
+  const [quitarPasswordAdmin, setQuitarPasswordAdmin] = useState(false);
+
+  const pinActual = usuario?.pinCaja || null;
+  const pinEnviado = formData.pinCaja?.trim() || "";
+  const passwordAdminActual = usuario?.passwordAdmin || null;
+  const esAdmin = roles.find((r) => r.id === formData.idrol)?.nombre === "Admin";
 
   useEffect(() => {
     if (usuario) {
@@ -40,6 +49,8 @@ export function UsuarioModal({
         telefono: usuario.telefono || "",
         idrol: usuario.idrol,
         password: "", // Opcional al editar
+        pinCaja: "",
+        passwordAdmin: "",
       });
     } else {
       setFormData({
@@ -49,15 +60,33 @@ export function UsuarioModal({
         telefono: "",
         idrol: roles[0]?.id || 1,
         password: "",
+        pinCaja: "",
+        passwordAdmin: "",
       });
     }
+    setQuitarPin(false);
+    setQuitarPasswordAdmin(false);
   }, [usuario, roles]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(formData, usuario?.id);
+    const payload: CreateUsuarioDTO = { ...formData };
+
+    if (quitarPin) {
+      payload.pinCaja = "";
+    } else if (!pinEnviado) {
+      delete payload.pinCaja;
+    }
+
+    if (quitarPasswordAdmin) {
+      payload.passwordAdmin = "";
+    } else if (!formData.passwordAdmin?.trim()) {
+      delete payload.passwordAdmin;
+    }
+
+    await onSave(payload, usuario?.id);
   };
 
   return (
@@ -175,6 +204,100 @@ export function UsuarioModal({
               }
             />
           </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-amber-800 uppercase">
+                PIN de Caja
+              </label>
+              {pinActual && !quitarPin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuitarPin(true);
+                    setFormData({ ...formData, pinCaja: "" });
+                  }}
+                  className="text-xs font-medium text-amber-700 hover:text-amber-900 underline"
+                >
+                  Quitar PIN
+                </button>
+              )}
+            </div>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={6}
+              pattern="[0-9]*"
+              disabled={quitarPin}
+              value={quitarPin ? "" : formData.pinCaja || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  pinCaja: e.target.value.replace(/\D/g, ""),
+                })
+              }
+              className="w-full px-3 py-2 border border-amber-300 bg-white rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm text-gray-800 font-mono tracking-widest disabled:bg-gray-100 disabled:text-gray-400"
+              placeholder={
+                usuario
+                  ? pinActual
+                    ? "Dejar en blanco para conservar"
+                    : "Sin PIN asignado"
+                  : "Opcional - 6 dígitos"
+              }
+            />
+            <p className="text-xs text-amber-700 mt-1">
+              {quitarPin
+                ? "El PIN se eliminará al guardar."
+                : "Hasta 6 dígitos, único por usuario. Necesario para abrir y cerrar la caja en el POS."}
+            </p>
+          </div>
+
+          {/* Contraseña de administrador (para operaciones sensibles) */}
+          {esAdmin && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex justify-between items-start mb-2">
+                <label className="block text-sm font-semibold text-blue-900">
+                  Contraseña de administrador
+                </label>
+                {passwordAdminActual && !quitarPasswordAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuitarPasswordAdmin(true);
+                      setFormData({ ...formData, passwordAdmin: "" });
+                    }}
+                    className="text-xs font-medium text-blue-700 hover:text-blue-900 underline"
+                  >
+                    Quitar contraseña
+                  </button>
+                )}
+              </div>
+              <input
+                type="password"
+                disabled={quitarPasswordAdmin}
+                value={quitarPasswordAdmin ? "" : formData.passwordAdmin || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    passwordAdmin: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 border border-blue-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm text-gray-800 disabled:bg-gray-100 disabled:text-gray-400"
+                placeholder={
+                  usuario
+                    ? passwordAdminActual
+                      ? "Dejar en blanco para conservar"
+                      : "Sin contraseña asignada"
+                    : "Opcional - usada para editar arqueos y cierre admin"
+                }
+              />
+              <p className="text-xs text-blue-700 mt-1">
+                {quitarPasswordAdmin
+                  ? "La contraseña de administrador se eliminará al guardar."
+                  : "Independiente del login. Si está vacía, las operaciones sensibles quedan deshabilitadas hasta que se asigne."}
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
             <button

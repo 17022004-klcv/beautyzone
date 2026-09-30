@@ -45,3 +45,6 @@ next-env.d.ts
 .claude
 .cursor
 .devin
+# respaldos de base de datos (volcados .sql, nunca al repo)
+backups/
+
